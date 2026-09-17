@@ -13,15 +13,26 @@ end
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
+-- Вспомогательная функция для создания красивых иконных значков из SVG/Vector Shapes
+local IconSVGs = {
+    Sword = "rbxassetid://10747373151",
+    Shield = "rbxassetid://10747372072",
+    Settings = "rbxassetid://10734950309",
+    User = "rbxassetid://10747372072",
+    Search = "rbxassetid://10734939222",
+    Sparkles = "rbxassetid://10734950309",
+    Zap = "rbxassetid://10734950309"
+}
+
 function NodiumUI.CreateWindow(config)
     local self = setmetatable({}, NodiumUI)
     
     local options = {
-        Title = "NodiumUI",
-        Icon = "rbxassetid://6031280882",
+        Title = "Nodium",
         Font = Enum.Font.SourceSansBold,
         
-        BackgroundColor = Color3.fromRGB(16, 16, 22),
+        -- Цветовая палитра как на фото
+        BackgroundColor = Color3.fromRGB(15, 15, 20),
         TopBarColor = Color3.fromRGB(22, 22, 30),
         CardColor = Color3.fromRGB(24, 24, 32),
         AccentColor = Color3.fromRGB(115, 100, 235),
@@ -49,12 +60,12 @@ function NodiumUI.CreateWindow(config)
         screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     end
 
-    -- Адаптивный размер: На мобильных макс. 70-75% экрана
     local camera = workspace.CurrentCamera
     local viewportSize = camera and camera.ViewportSize or Vector2.new(1280, 720)
     
-    local windowWidth = isMobile and math.clamp(math.floor(viewportSize.X * 0.72), 320, 480) or 740
-    local windowHeight = isMobile and math.clamp(math.floor(viewportSize.Y * 0.70), 240, 340) or 440
+    -- Компактный размер: на мобильных макс. 70-75% экрана
+    local windowWidth = isMobile and math.clamp(math.floor(viewportSize.X * 0.72), 320, 480) or 750
+    local windowHeight = isMobile and math.clamp(math.floor(viewportSize.Y * 0.70), 250, 350) or 450
 
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
@@ -66,10 +77,10 @@ function NodiumUI.CreateWindow(config)
     mainFrame.Parent = screenGui
 
     local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 14)
+    mainCorner.CornerRadius = UDim.new(0, 12)
     mainCorner.Parent = mainFrame
 
-    -- Перетаскивание (Drag / Touch)
+    -- Drag System
     local function makeDraggable(frame, handle)
         handle = handle or frame
         local dragging, dragStart, startPos
@@ -96,33 +107,67 @@ function NodiumUI.CreateWindow(config)
 
     makeDraggable(mainFrame)
 
-    -- TopBar
+    -- =========================================================================
+    -- TOPBAR (Слева: Название | Центр: Вкладки | Справа: Кнопки управления)
+    -- =========================================================================
     local topBar = Instance.new("Frame")
     topBar.Name = "TopBar"
-    topBar.Size = UDim2.new(1, 0, 0, 38)
+    topBar.Size = UDim2.new(1, 0, 0, 42)
     topBar.BackgroundColor3 = options.TopBarColor
     topBar.BorderSizePixel = 0
     topBar.Parent = mainFrame
 
     local topCorner = Instance.new("UICorner")
-    topCorner.CornerRadius = UDim.new(0, 14)
+    topCorner.CornerRadius = UDim.new(0, 12)
     topCorner.Parent = topBar
 
-    local controlButtons = Instance.new("Frame")
-    controlButtons.Name = "ControlButtons"
-    controlButtons.Size = UDim2.new(0, 60, 1, 0)
-    controlButtons.Position = UDim2.new(1, -65, 0, 0)
-    controlButtons.BackgroundTransparency = 1
-    controlButtons.Parent = topBar
+    -- 1. Слева: Логотип + Название
+    local titleContainer = Instance.new("Frame")
+    titleContainer.Name = "TitleContainer"
+    titleContainer.Size = UDim2.new(0, isMobile and 100 or 150, 1, 0)
+    titleContainer.Position = UDim2.new(0, 12, 0, 0)
+    titleContainer.BackgroundTransparency = 1
+    titleContainer.Parent = topBar
 
-    local btnLayout = Instance.new("UIListLayout")
-    btnLayout.FillDirection = Enum.FillDirection.Horizontal
-    btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    btnLayout.Padding = UDim.new(0, 4)
-    btnLayout.Parent = controlButtons
+    local logoIcon = Instance.new("Frame")
+    logoIcon.Size = UDim2.new(0, 18, 0, 18)
+    logoIcon.Position = UDim2.new(0, 0, 0.5, -9)
+    logoIcon.BackgroundColor3 = options.AccentColor
+    logoIcon.BorderSizePixel = 0
+    logoIcon.Parent = titleContainer
 
-    -- Кнопка Свернуть (-)
+    local logoCorner = Instance.new("UICorner")
+    logoCorner.CornerRadius = UDim.new(0, 5)
+    logoCorner.Parent = logoIcon
+
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Size = UDim2.new(1, -26, 1, 0)
+    titleLbl.Position = UDim2.new(0, 24, 0, 0)
+    titleLbl.Text = options.Title
+    titleLbl.TextColor3 = options.TextColor
+    titleLbl.Font = options.Font
+    titleLbl.TextSize = isMobile and 13 or 15
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Parent = titleContainer
+
+    -- 2. Справа: Кнопки управления (— и ✕)
+    local rightControls = Instance.new("Frame")
+    rightControls.Name = "RightControls"
+    rightControls.Size = UDim2.new(0, isMobile and 60 or 90, 1, 0)
+    rightControls.Position = UDim2.new(1, isMobile and -65 or -95, 0, 0)
+    rightControls.BackgroundTransparency = 1
+    rightControls.Parent = topBar
+
+    local rightLayout = Instance.new("UIListLayout")
+    rightLayout.FillDirection = Enum.FillDirection.Horizontal
+    rightLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    rightLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    rightLayout.Padding = UDim.new(0, 4)
+    rightLayout.Parent = rightControls
+
+    -- Кнопка свернуть (—)
     local minimizeBtn = Instance.new("TextButton")
     minimizeBtn.Name = "MinimizeButton"
     minimizeBtn.Size = UDim2.new(0, 26, 0, 26)
@@ -131,9 +176,9 @@ function NodiumUI.CreateWindow(config)
     minimizeBtn.TextColor3 = options.SubTextColor
     minimizeBtn.Font = options.Font
     minimizeBtn.TextSize = 14
-    minimizeBtn.Parent = controlButtons
+    minimizeBtn.Parent = rightControls
 
-    -- Кнопка Закрыть (✕)
+    -- Кнопка закрытия (✕)
     local closeBtn = Instance.new("TextButton")
     closeBtn.Name = "CloseButton"
     closeBtn.Size = UDim2.new(0, 26, 0, 26)
@@ -142,13 +187,13 @@ function NodiumUI.CreateWindow(config)
     closeBtn.TextColor3 = options.SubTextColor
     closeBtn.Font = options.Font
     closeBtn.TextSize = 15
-    closeBtn.Parent = controlButtons
+    closeBtn.Parent = rightControls
 
-    -- Вкладки
+    -- 3. Центр: Иконки вкладок без названий
     local tabsContainer = Instance.new("Frame")
     tabsContainer.Name = "TabsContainer"
-    tabsContainer.Size = UDim2.new(1, -75, 1, 0)
-    tabsContainer.Position = UDim2.new(0, 10, 0, 0)
+    tabsContainer.Size = UDim2.new(1, isMobile and -170 or -260, 1, 0)
+    tabsContainer.Position = UDim2.new(0, isMobile and 105 or 155, 0, 0)
     tabsContainer.BackgroundTransparency = 1
     tabsContainer.Parent = topBar
 
@@ -156,18 +201,20 @@ function NodiumUI.CreateWindow(config)
     tabsLayout.FillDirection = Enum.FillDirection.Horizontal
     tabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     tabsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    tabsLayout.Padding = UDim.new(0, 16)
+    tabsLayout.Padding = UDim.new(0, isMobile and 10 or 16)
     tabsLayout.Parent = tabsContainer
 
-    -- Контейнер содержимого
+    -- Контейнер контента
     local container = Instance.new("Frame")
     container.Name = "ContentContainer"
-    container.Size = UDim2.new(1, -16, 1, -46)
-    container.Position = UDim2.new(0, 8, 0, 42)
+    container.Size = UDim2.new(1, -16, 1, -50)
+    container.Position = UDim2.new(0, 8, 0, 46)
     container.BackgroundTransparency = 1
     container.Parent = mainFrame
 
-    -- Плашка разворачивания вверху экрана (MiniBar Widget)
+    -- =========================================================================
+    -- МИНИ-ПЛАШКА СВОРАЧИВАНИЯ (Капсула вверху)
+    -- =========================================================================
     local miniBar = Instance.new("Frame")
     miniBar.Name = "MiniBar"
     miniBar.Size = UDim2.new(0, 200, 0, 38)
@@ -213,17 +260,9 @@ function NodiumUI.CreateWindow(config)
     miniContent.Text = ""
     miniContent.Parent = miniBar
 
-    local miniIconImg = Instance.new("ImageLabel")
-    miniIconImg.Size = UDim2.new(0, 18, 0, 18)
-    miniIconImg.Position = UDim2.new(0, 2, 0.5, -9)
-    miniIconImg.Image = options.Icon
-    miniIconImg.ImageColor3 = options.AccentColor
-    miniIconImg.BackgroundTransparency = 1
-    miniIconImg.Parent = miniContent
-
     local miniTitleLbl = Instance.new("TextLabel")
-    miniTitleLbl.Size = UDim2.new(1, -26, 1, 0)
-    miniTitleLbl.Position = UDim2.new(0, 24, 0, 0)
+    miniTitleLbl.Size = UDim2.new(1, -10, 1, 0)
+    miniTitleLbl.Position = UDim2.new(0, 5, 0, 0)
     miniTitleLbl.Text = options.Title
     miniTitleLbl.TextColor3 = options.TextColor
     miniTitleLbl.Font = options.Font
@@ -245,7 +284,9 @@ function NodiumUI.CreateWindow(config)
         mainFrame.Visible = true
     end)
 
-    -- Диалог подтверждения закрытия
+    -- =========================================================================
+    -- ДИАЛОГ ПОДТВЕРЖДЕНИЯ ЗАКРЫТИЯ
+    -- =========================================================================
     local overlay = Instance.new("Frame")
     overlay.Name = "ConfirmOverlay"
     overlay.Size = UDim2.new(1, 0, 1, 0)
@@ -257,8 +298,8 @@ function NodiumUI.CreateWindow(config)
 
     local dialogBox = Instance.new("Frame")
     dialogBox.Name = "DialogBox"
-    dialogBox.Size = UDim2.new(0, isMobile and 250 or 300, 0, 120)
-    dialogBox.Position = UDim2.new(0.5, isMobile and -125 or -150, 0.5, -60)
+    dialogBox.Size = UDim2.new(0, isMobile and 240 or 290, 0, 120)
+    dialogBox.Position = UDim2.new(0.5, isMobile and -120 or -145, 0.5, -60)
     dialogBox.BackgroundColor3 = options.TopBarColor
     dialogBox.BorderSizePixel = 0
     dialogBox.ZIndex = 11
@@ -340,7 +381,7 @@ function NodiumUI:AddTab(iconAssetId)
     tabButton.Name = "TabIcon"
     tabButton.Size = UDim2.new(0, 20, 0, 20)
     tabButton.BackgroundTransparency = 1
-    tabButton.Image = iconAssetId or "rbxassetid://6031094678"
+    tabButton.Image = IconSVGs[iconAssetId] or iconAssetId or "rbxassetid://6031094678"
     tabButton.ImageColor3 = options.SubTextColor
     tabButton.Parent = self.TopBar.TabsContainer
 
@@ -354,7 +395,6 @@ function NodiumUI:AddTab(iconAssetId)
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.Parent = self.Container
 
-    -- На смартфонах строго 1 колонка, на ПК — 3
     local columnCount = isMobile and 1 or 3
     local columns = {}
 
