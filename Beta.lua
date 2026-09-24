@@ -5,128 +5,121 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
-function Library.new(scriptName, iconUrl)
+function Library.new(scriptName, iconUrl, customTheme)
     local self = setmetatable({}, Library)
     
-    -- Главный экран
+    -- Тема по умолчанию (темная в стиле Obsidian / WindUI)
+    self.Theme = customTheme or {
+        Background = Color3.fromRGB(16, 16, 20),
+        TopBar = Color3.fromRGB(22, 22, 28),
+        Accent = Color3.fromRGB(0, 170, 255),
+        Text = Color3.fromRGB(220, 220, 230),
+        DarkText = Color3.fromRGB(140, 140, 150),
+        Stroke = Color3.fromRGB(40, 40, 50)
+    }
+
     self.ScreenGui = Instance.new("ScreenGui")
     self.ScreenGui.Name = "NodiumScript_UI"
     self.ScreenGui.Parent = CoreGui
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    -- Основное окно (стиль Expensive / Obsidian)
+    -- Главное окно
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainFrame"
     self.MainFrame.Parent = self.ScreenGui
-    self.MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+    self.MainFrame.BackgroundColor3 = self.Theme.Background
     self.MainFrame.BorderSizePixel = 0
-    self.MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
-    self.MainFrame.Size = UDim2.new(0, 450, 0, 300)
+    self.MainFrame.Position = UDim2.new(0.5, -275, 0.5, -190)
+    self.MainFrame.Size = UDim2.new(0, 550, 0, 380)
 
     local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 6)
+    MainCorner.CornerRadius = UDim.new(0, 8)
     MainCorner.Parent = self.MainFrame
 
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Parent = self.MainFrame
-    MainStroke.Color = Color3.fromRGB(45, 45, 55)
+    MainStroke.Color = self.Theme.Stroke
     MainStroke.Thickness = 1
 
     -- Шапка
     self.TopBar = Instance.new("Frame")
     self.TopBar.Name = "TopBar"
     self.TopBar.Parent = self.MainFrame
-    self.TopBar.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    self.TopBar.BackgroundColor3 = self.Theme.TopBar
     self.TopBar.BorderSizePixel = 0
-    self.TopBar.Size = UDim2.new(1, 0, 0, 32)
+    self.TopBar.Size = UDim2.new(1, 0, 0, 36)
 
     local TopCorner = Instance.new("UICorner")
-    TopCorner.CornerRadius = UDim.new(0, 6)
+    TopCorner.CornerRadius = UDim.new(0, 8)
     TopCorner.Parent = self.TopBar
 
     local TopFix = Instance.new("Frame")
     TopFix.Parent = self.TopBar
-    TopFix.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    TopFix.BackgroundColor3 = self.Theme.TopBar
     TopFix.BorderSizePixel = 0
-    TopFix.Position = UDim2.new(0, 0, 1, -5)
-    TopFix.Size = UDim2.new(1, 0, 0, 5)
+    TopFix.Position = UDim2.new(0, 0, 1, -6)
+    TopFix.Size = UDim2.new(1, 0, 0, 6)
 
-    -- Название скрипта в шапке
+    -- Название скрипта
     self.Title = Instance.new("TextLabel")
     self.Title.Parent = self.TopBar
     self.Title.BackgroundTransparency = 1
-    self.Title.Position = UDim2.new(0, 12, 0, 0)
-    self.Title.Size = UDim2.new(1, -100, 1, 0)
+    self.Title.Position = UDim2.new(0, 14, 0, 0)
+    self.Title.Size = UDim2.new(0, 200, 1, 0)
     self.Title.Font = Enum.Font.GothamBold
     self.Title.Text = scriptName or "Script Hub"
-    self.Title.TextColor3 = Color3.fromRGB(220, 220, 230)
+    self.Title.TextColor3 = self.Theme.Text
     self.Title.TextSize = 13
     self.Title.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Кнопка закрытия (×)
+    -- Кнопки управления (Закрыть / Свернуть)
     local CloseButton = Instance.new("TextButton")
     CloseButton.Parent = self.TopBar
     CloseButton.BackgroundTransparency = 1
-    CloseButton.Position = UDim2.new(1, -30, 0, 0)
-    CloseButton.Size = UDim2.new(0, 30, 1, 0)
+    CloseButton.Position = UDim2.new(1, -35, 0, 0)
+    CloseButton.Size = UDim2.new(0, 35, 1, 0)
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.Text = "×"
-    CloseButton.TextColor3 = Color3.fromRGB(150, 150, 160)
-    CloseButton.TextSize = 16
+    CloseButton.TextColor3 = self.Theme.DarkText
+    CloseButton.TextSize = 18
 
     CloseButton.MouseButton1Click:Connect(function()
         self.ScreenGui:Destroy()
     end)
 
-    -- Кнопка сворачивания (-)
     local MinimizeButton = Instance.new("TextButton")
     MinimizeButton.Parent = self.TopBar
     MinimizeButton.BackgroundTransparency = 1
-    MinimizeButton.Position = UDim2.new(1, -60, 0, 0)
-    MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
+    MinimizeButton.Position = UDim2.new(1, -70, 0, 0)
+    MinimizeButton.Size = UDim2.new(0, 35, 1, 0)
     MinimizeButton.Font = Enum.Font.GothamBold
     MinimizeButton.Text = "-"
-    MinimizeButton.TextColor3 = Color3.fromRGB(150, 150, 160)
-    MinimizeButton.TextSize = 16
+    MinimizeButton.TextColor3 = self.Theme.DarkText
+    MinimizeButton.TextSize = 18
 
-    -- Создание круглой плавающей кнопки (логотипа) для развертывания
+    -- Плавающая круглая кнопка для развертывания
     local FloatingButton = Instance.new("ImageButton")
     FloatingButton.Name = "FloatingLogo"
     FloatingButton.Parent = self.ScreenGui
-    FloatingButton.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    FloatingButton.BackgroundColor3 = self.Theme.TopBar
     FloatingButton.Position = UDim2.new(0, 30, 0.5, -25)
-    FloatingButton.Size = UDim2.new(0, 45, 0, 45)
+    FloatingButton.Size = UDim2.new(0, 48, 0, 48)
     FloatingButton.Visible = false
     FloatingButton.AutoButtonColor = false
 
     local FloatCorner = Instance.new("UICorner")
-    FloatCorner.CornerRadius = UDim.new(1, 0) -- Делает кнопку идеально круглой
+    FloatCorner.CornerRadius = UDim.new(1, 0)
     FloatCorner.Parent = FloatingButton
 
     local FloatStroke = Instance.new("UIStroke")
     FloatStroke.Parent = FloatingButton
-    FloatStroke.Color = Color3.fromRGB(0, 170, 255)
+    FloatStroke.Color = self.Theme.Accent
     FloatStroke.Thickness = 2
 
-    -- Загрузка картинки из репозитория (прямая ссылка, например на logo.png)
     if iconUrl then
-        pcall(function()
-            if writefile and syn and syn.request then
-                -- Если эксплойт поддерживает скачивание файлов локально для getcustomasset
-                local response = syn.request({Url = iconUrl, Method = "GET"})
-                if response.StatusCode == 200 then
-                    local fileName = "nodium_logo_" .. math.random(1000, 9999) .. ".png"
-                    writefile(fileName, response.Body)
-                    FloatingButton.Image = getcustomasset(fileName)
-                end
-            else
-                -- Универсальный метод через текстурные ссылки / обход
-                FloatingButton.Image = iconUrl
-            end
-        end)
+        FloatingButton.Image = iconUrl
     end
 
-    -- Логика свернуть / развернуть
     MinimizeButton.MouseButton1Click:Connect(function()
         self.MainFrame.Visible = false
         FloatingButton.Visible = true
@@ -163,91 +156,275 @@ function Library.new(scriptName, iconUrl)
         end
     end)
 
-    -- Перетаскивание круглой плавающей кнопки по экрану мобилы/ПК
-    local fDragging, fInput, fStart, fPos
-    FloatingButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            fDragging = true
-            fStart = input.Position
-            fPos = FloatingButton.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then fDragging = false end
-            end)
-        end
-    end)
+    -- Панель навигации по вкладкам слева
+    self.TabList = Instance.new("ScrollingFrame")
+    self.TabList.Parent = self.MainFrame
+    self.TabList.BackgroundTransparency = 1
+    self.TabList.Position = UDim2.new(0, 10, 0, 48)
+    self.TabList.Size = UDim2.new(0, 130, 1, -58)
+    self.TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    self.TabList.ScrollBarThickness = 0
 
-    FloatingButton.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            fInput = input
-        end
-    end)
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.Parent = self.TabList
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Padding = UDim.new(0, 6)
 
-    UserInputService.InputChanged:Connect(function(input)
-        if input == fInput and fDragging then
-            local delta = input.Position - fStart
-            FloatingButton.Position = UDim2.new(fPos.X.Scale, fPos.X.Offset + delta.X, fPos.Y.Scale, fPos.Y.Offset + delta.Y)
-        end
-    end)
+    -- Контейнер страниц
+    self.PagesContainer = Instance.new("Folder")
+    self.PagesContainer.Name = "PagesContainer"
+    self.PagesContainer.Parent = self.MainFrame
 
-    -- Контейнер для элементов скрипта (без вкладок)
-    self.Container = Instance.new("ScrollingFrame")
-    self.Container.Parent = self.MainFrame
-    self.Container.Active = true
-    self.Container.BackgroundTransparency = 1
-    self.Container.Position = UDim2.new(0, 10, 0, 42)
-    self.Container.Size = UDim2.new(1, -20, 1, -50)
-    self.Container.CanvasSize = UDim2.new(0, 0, 2, 0)
-    self.Container.ScrollBarThickness = 2
-    self.Container.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 75)
-
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Parent = self.Container
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    UIListLayout.Padding = UDim.new(0, 5)
+    self.FirstTab = true
 
     return self
 end
 
--- Метод добавления тумблера
-function Library:AddToggle(toggleText, callback)
-    local ToggleButton = Instance.new("TextButton")
-    ToggleButton.Parent = self.Container
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-    ToggleButton.Size = UDim2.new(1, 0, 0, 30)
-    ToggleButton.AutoButtonColor = false
-    ToggleButton.Font = Enum.Font.Gotham
-    ToggleButton.Text = "  " .. toggleText
-    ToggleButton.TextColor3 = Color3.fromRGB(190, 190, 200)
-    ToggleButton.TextSize = 12
-    ToggleButton.TextXAlignment = Enum.TextXAlignment.Left
+-- Метод создания вкладки с кастомной иконкой/эмодзи
+function Library:AddTab(tabName, iconText)
+    local tabObj = {}
 
-    local TCorner = Instance.new("UICorner")
-    TCorner.CornerRadius = UDim.new(0, 4)
-    TCorner.Parent = ToggleButton
+    local TabButton = Instance.new("TextButton")
+    TabButton.Parent = self.TabList
+    TabButton.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    TabButton.Size = UDim2.new(1, 0, 0, 36)
+    TabButton.AutoButtonColor = false
+    TabButton.Font = Enum.Font.GothamMedium
+    TabButton.Text = "   " .. (iconText or "📁") .. "   " .. tabName
+    TabButton.TextColor3 = self.Theme.DarkText
+    TabButton.TextSize = 12
+    TabButton.TextXAlignment = Enum.TextXAlignment.Left
 
-    local TStroke = Instance.new("UIStroke")
-    TStroke.Parent = ToggleButton
-    TStroke.Color = Color3.fromRGB(35, 35, 45)
-    TStroke.Thickness = 1
+    local TabCorner = Instance.new("UICorner")
+    TabCorner.CornerRadius = UDim.new(0, 6)
+    TabCorner.Parent = TabButton
 
-    local StatusIndicator = Instance.new("Frame")
-    StatusIndicator.Parent = ToggleButton
-    StatusIndicator.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    StatusIndicator.Position = UDim2.new(1, -24, 0.5, -7)
-    StatusIndicator.Size = Instance.new("Frame") and UDim2.new(0, 14, 0, 14)
+    -- Страница содержимого
+    local PageContent = Instance.new("ScrollingFrame")
+    PageContent.Parent = self.PagesContainer
+    PageContent.Active = true
+    PageContent.BackgroundTransparency = 1
+    PageContent.Position = UDim2.new(0, 150, 0, 48)
+    PageContent.Size = UDim2.new(1, -160, 1, -58)
+    PageContent.Visible = false
+    PageContent.CanvasSize = UDim2.new(0, 0, 2, 0)
+    PageContent.ScrollBarThickness = 3
+    PageContent.ScrollBarImageColor3 = Color3.fromRGB(45, 45, 55)
 
-    local IndicatorCorner = Instance.new("UICorner")
-    IndicatorCorner.CornerRadius = UDim.new(0, 3)
-    IndicatorCorner.Parent = StatusIndicator
+    local PageLayout = Instance.new("UIListLayout")
+    PageLayout.Parent = PageContent
+    PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    PageLayout.Padding = UDim.new(0, 8)
 
-    local toggled = false
-    ToggleButton.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        TweenService:Create(StatusIndicator, TweenInfo.new(0.15), {
-            BackgroundColor3 = toggled and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(45, 45, 55)
-        }):Play()
-        pcall(callback, toggled)
+    if self.FirstTab then
+        PageContent.Visible = true
+        TabButton.TextColor3 = self.Theme.Text
+        TabButton.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+        self.FirstTab = false
+    end
+
+    TabButton.MouseButton1Click:Connect(function()
+        for _, page in pairs(self.PagesContainer:GetChildren()) do
+            if page:IsA("ScrollingFrame") then page.Visible = false end
+        end
+        for _, btn in pairs(self.TabList:GetChildren()) do
+            if btn:IsA("TextButton") then
+                TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = self.Theme.DarkText, BackgroundColor3 = Color3.fromRGB(22, 22, 28)}):Play()
+            end
+        end
+        PageContent.Visible = true
+        TweenService:Create(TabButton, TweenInfo.new(0.2), {TextColor3 = self.Theme.Text, BackgroundColor3 = Color3.fromRGB(28, 28, 36)}):Play()
     end)
+
+    -- Добавление элементов во вкладку
+    function tabObj:AddToggle(text, callback)
+        local ToggleBtn = Instance.new("TextButton")
+        ToggleBtn.Parent = PageContent
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+        ToggleBtn.Size = UDim2.new(1, -10, 0, 36)
+        ToggleBtn.AutoButtonColor = false
+        ToggleBtn.Font = Enum.Font.Gotham
+        ToggleBtn.Text = "  " .. text
+        ToggleBtn.TextColor3 = self.Theme.Text
+        ToggleBtn.TextSize = 12
+        ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 6)
+        Corner.Parent = ToggleBtn
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Parent = ToggleBtn
+        Stroke.Color = Color3.fromRGB(35, 35, 45)
+        Stroke.Thickness = 1
+
+        local Indicator = Instance.new("Frame")
+        Indicator.Parent = ToggleBtn
+        Indicator.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+        Indicator.Position = UDim2.new(1, -30, 0.5, -9)
+        Indicator.Size = UDim2.new(0, 18, 0, 18)
+
+        local IndCorner = Instance.new("UICorner")
+        IndCorner.CornerRadius = UDim.new(0, 4)
+        IndCorner.Parent = Indicator
+
+        local state = false
+        ToggleBtn.MouseButton1Click:Connect(function()
+            state = not state
+            TweenService:Create(Indicator, TweenInfo.new(0.15), {
+                BackgroundColor3 = state and self.Theme.Accent or Color3.fromRGB(45, 45, 55)
+            }):Play()
+            pcall(callback, state)
+        end)
+    end
+
+    function tabObj:AddSlider(text, min, max, default, callback)
+        local SliderFrame = Instance.new("Frame")
+        SliderFrame.Parent = PageContent
+        SliderFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+        SliderFrame.Size = UDim2.new(1, -10, 0, 50)
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 6)
+        Corner.Parent = SliderFrame
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Parent = SliderFrame
+        Stroke.Color = Color3.fromRGB(35, 35, 45)
+        Stroke.Thickness = 1
+
+        local TitleLabel = Instance.new("TextLabel")
+        TitleLabel.Parent = SliderFrame
+        TitleLabel.BackgroundTransparency = 1
+        TitleLabel.Position = UDim2.new(0, 10, 0, 6)
+        TitleLabel.Size = UDim2.new(1, -20, 0, 18)
+        TitleLabel.Font = Enum.Font.Gotham
+        TitleLabel.Text = text
+        TitleLabel.TextColor3 = self.Theme.Text
+        TitleLabel.TextSize = 12
+        TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+        local ValueLabel = Instance.new("TextLabel")
+        ValueLabel.Parent = SliderFrame
+        ValueLabel.BackgroundTransparency = 1
+        ValueLabel.Position = UDim2.new(0, 10, 0, 6)
+        ValueLabel.Size = UDim2.new(1, -20, 0, 18)
+        ValueLabel.Font = Enum.Font.GothamBold
+        ValueLabel.Text = tostring(default or min)
+        ValueLabel.TextColor3 = self.Theme.Accent
+        ValueLabel.TextSize = 12
+        ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+
+        local Track = Instance.new("Frame")
+        Track.Parent = SliderFrame
+        Track.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        Track.Position = UDim2.new(0, 10, 0, 32)
+        Track.Size = UDim2.new(1, -20, 0, 6)
+
+        local TrackCorner = Instance.new("UICorner")
+        TrackCorner.CornerRadius = UDim.new(1, 0)
+        TrackCorner.Parent = Track
+
+        local Fill = Instance.new("Frame")
+        Fill.Parent = Track
+        Fill.BackgroundColor3 = self.Theme.Accent
+        Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+
+        local FillCorner = Instance.new("UICorner")
+        FillCorner.CornerRadius = UDim.new(1, 0)
+        FillCorner.Parent = Fill
+
+        local dragging = false
+        local function update(input)
+            local pos = math.clamp((input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
+            local val = math.floor(min + ((max - min) * pos))
+            Fill.Size = UDim2.new(pos, 0, 1, 0)
+            ValueLabel.Text = tostring(val)
+            pcall(callback, val)
+        end
+
+        Track.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                update(input)
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                update(input)
+            end
+        end)
+    end
+
+    function tabObj:AddDropdown(text, options, callback)
+        local opened = false
+        local DropdownFrame = Instance.new("Frame")
+        DropdownFrame.Parent = PageContent
+        DropdownFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+        DropdownFrame.Size = UDim2.new(1, -10, 0, 36)
+        DropdownFrame.ClipsDescendants = true
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 6)
+        Corner.Parent = DropdownFrame
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Parent = DropdownFrame
+        Stroke.Color = Color3.fromRGB(35, 35, 45)
+        Stroke.Thickness = 1
+
+        local DropBtn = Instance.new("TextButton")
+        DropBtn.Parent = DropdownFrame
+        DropBtn.BackgroundTransparency = 1
+        DropBtn.Size = UDim2.new(1, 0, 0, 36)
+        DropBtn.Font = Enum.Font.Gotham
+        DropBtn.Text = "  " .. text .. " : " .. (options[1] or "")
+        DropBtn.TextColor3 = self.Theme.Text
+        DropBtn.TextSize = 12
+        DropBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+        local ListLayout = Instance.new("UIListLayout")
+        ListLayout.Parent = DropdownFrame
+        ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        ListLayout.Padding = UDim.new(0, 2)
+
+        local totalHeight = 38
+        for _, opt in ipairs(options) do
+            totalHeight = totalHeight + 30
+            local OptBtn = Instance.new("TextButton")
+            OptBtn.Parent = DropdownFrame
+            OptBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+            OptBtn.Size = UDim2.new(1, 0, 0, 28)
+            OptBtn.Font = Enum.Font.Gotham
+            OptBtn.Text = "    " .. opt
+            OptBtn.TextColor3 = self.Theme.DarkText
+            OptBtn.TextSize = 11
+            OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+            OptBtn.MouseButton1Click:Connect(function()
+                DropBtn.Text = "  " .. text .. " : " .. opt
+                opened = false
+                TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 36)}):Play()
+                pcall(callback, opt)
+            end)
+        end
+
+        DropBtn.MouseButton1Click:Connect(function()
+            opened = not opened
+            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {
+                Size = opened and UDim2.new(1, -10, 0, totalHeight) or UDim2.new(1, -10, 0, 36)
+            }):Play()
+        end)
+    end
+
+    return tabObj
 end
 
 return Library
