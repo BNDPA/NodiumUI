@@ -8,18 +8,20 @@ local CoreGui = game:GetService("CoreGui")
 function Library.new(scriptName, iconUrl, customTheme)
     local self = setmetatable({}, Library)
     
-    -- Тема по умолчанию (темная в стиле Obsidian / WindUI)
+    -- Тема в стиле Neverlose (nl) / Vertex: темный графит, неоновый фиолетово-синий/мятный акцент
     self.Theme = customTheme or {
-        Background = Color3.fromRGB(16, 16, 20),
-        TopBar = Color3.fromRGB(22, 22, 28),
-        Accent = Color3.fromRGB(0, 170, 255),
-        Text = Color3.fromRGB(220, 220, 230),
-        DarkText = Color3.fromRGB(140, 140, 150),
-        Stroke = Color3.fromRGB(40, 40, 50)
+        Background = Color3.fromRGB(13, 13, 16),
+        TopBar = Color3.fromRGB(17, 17, 21),
+        Accent = Color3.fromRGB(114, 91, 238), -- Фирменный фиолетовый Neverlose (можно заменить на бирюзовый Vertex)
+        AccentGlow = Color3.fromRGB(140, 120, 255),
+        Text = Color3.fromRGB(240, 240, 245),
+        DarkText = Color3.fromRGB(120, 120, 135),
+        Stroke = Color3.fromRGB(30, 30, 38),
+        ElementBg = Color3.fromRGB(19, 19, 24)
     }
 
     self.ScreenGui = Instance.new("ScreenGui")
-    self.ScreenGui.Name = "NodiumScript_UI"
+    self.ScreenGui.Name = "NeverloseStyle_UI"
     self.ScreenGui.Parent = CoreGui
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -29,8 +31,8 @@ function Library.new(scriptName, iconUrl, customTheme)
     self.MainFrame.Parent = self.ScreenGui
     self.MainFrame.BackgroundColor3 = self.Theme.Background
     self.MainFrame.BorderSizePixel = 0
-    self.MainFrame.Position = UDim2.new(0.5, -275, 0.5, -190)
-    self.MainFrame.Size = UDim2.new(0, 550, 0, 380)
+    self.MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
 
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 8)
@@ -39,15 +41,15 @@ function Library.new(scriptName, iconUrl, customTheme)
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Parent = self.MainFrame
     MainStroke.Color = self.Theme.Stroke
-    MainStroke.Thickness = 1
+    MainStroke.Thickness = 1.5
 
-    -- Шапка
+    -- Шапка в стиле NV/Vertex
     self.TopBar = Instance.new("Frame")
     self.TopBar.Name = "TopBar"
     self.TopBar.Parent = self.MainFrame
     self.TopBar.BackgroundColor3 = self.Theme.TopBar
     self.TopBar.BorderSizePixel = 0
-    self.TopBar.Size = UDim2.new(1, 0, 0, 36)
+    self.TopBar.Size = UDim2.new(1, 0, 0, 40)
 
     local TopCorner = Instance.new("UICorner")
     TopCorner.CornerRadius = UDim.new(0, 8)
@@ -60,73 +62,84 @@ function Library.new(scriptName, iconUrl, customTheme)
     TopFix.Position = UDim2.new(0, 0, 1, -6)
     TopFix.Size = UDim2.new(1, 0, 0, 6)
 
-    -- Название скрипта
+    -- Название скрипта с неоновой точкой-индикатором
     self.Title = Instance.new("TextLabel")
     self.Title.Parent = self.TopBar
     self.Title.BackgroundTransparency = 1
-    self.Title.Position = UDim2.new(0, 14, 0, 0)
-    self.Title.Size = UDim2.new(0, 200, 1, 0)
+    self.Title.Position = UDim2.new(0, 16, 0, 0)
+    self.Title.Size = UDim2.new(0, 300, 1, 0)
     self.Title.Font = Enum.Font.GothamBold
-    self.Title.Text = scriptName or "Script Hub"
+    self.Title.Text = "  " .. (scriptName or "Neverlose Style")
     self.Title.TextColor3 = self.Theme.Text
     self.Title.TextSize = 13
     self.Title.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Кнопки управления (Закрыть / Свернуть)
+    local DotIndicator = Instance.new("Frame")
+    DotIndicator.Parent = self.Title
+    DotIndicator.BackgroundColor3 = self.Theme.Accent
+    DotIndicator.Position = UDim2.new(0, 0, 0.5, -3)
+    DotIndicator.Size = UDim2.new(0, 6, 0, 6)
+    
+    local DotCorner = Instance.new("UICorner")
+    DotCorner.CornerRadius = UDim.new(1, 0)
+    DotCorner.Parent = DotIndicator
+
+    -- Кнопки управления (Закрыть / Свернуть) в стиле NV
     local CloseButton = Instance.new("TextButton")
     CloseButton.Parent = self.TopBar
     CloseButton.BackgroundTransparency = 1
     CloseButton.Position = UDim2.new(1, -35, 0, 0)
     CloseButton.Size = UDim2.new(0, 35, 1, 0)
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.Text = "×"
+    CloseButton.Font = Enum.Font.GothamMedium
+    CloseButton.Text = "✕"
     CloseButton.TextColor3 = self.Theme.DarkText
-    CloseButton.TextSize = 18
+    CloseButton.TextSize = 13
 
-    CloseButton.MouseButton1Click:Connect(function()
-        self.ScreenGui:Destroy()
-    end)
+    CloseButton.MouseEnter:Connect(function() TweenService:Create(CloseButton, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play() end)
+    CloseButton.MouseLeave:Connect(function() TweenService:Create(CloseButton, TweenInfo.new(0.15), {TextColor3 = self.Theme.DarkText}):Play() end)
+    CloseButton.MouseButton1Click:Connect(function() self.ScreenGui:Destroy() end)
 
     local MinimizeButton = Instance.new("TextButton")
     MinimizeButton.Parent = self.TopBar
     MinimizeButton.BackgroundTransparency = 1
     MinimizeButton.Position = UDim2.new(1, -70, 0, 0)
     MinimizeButton.Size = UDim2.new(0, 35, 1, 0)
-    MinimizeButton.Font = Enum.Font.GothamBold
-    MinimizeButton.Text = "-"
+    MinimizeButton.Font = Enum.Font.GothamMedium
+    MinimizeButton.Text = "—"
     MinimizeButton.TextColor3 = self.Theme.DarkText
-    MinimizeButton.TextSize = 18
+    MinimizeButton.TextSize = 12
+
+    MinimizeButton.MouseEnter:Connect(function() TweenService:Create(MinimizeButton, TweenInfo.new(0.15), {TextColor3 = self.Theme.Text}):Play() end)
+    MinimizeButton.MouseLeave:Connect(function() TweenService:Create(MinimizeButton, TweenInfo.new(0.15), {TextColor3 = self.Theme.DarkText}):Play() end)
 
     -- Плавающая круглая кнопка для развертывания
-    local FloatingButton = Instance.new("ImageButton")
-    FloatingButton.Name = "FloatingLogo"
-    FloatingButton.Parent = self.ScreenGui
-    FloatingButton.BackgroundColor3 = self.Theme.TopBar
-    FloatingButton.Position = UDim2.new(0, 30, 0.5, -25)
-    FloatingButton.Size = UDim2.new(0, 48, 0, 48)
-    FloatingButton.Visible = false
-    FloatingButton.AutoButtonColor = false
+    self.FloatingButton = Instance.new("ImageButton")
+    self.FloatingButton.Name = "FloatingLogo"
+    self.FloatingButton.Parent = self.ScreenGui
+    self.FloatingButton.BackgroundColor3 = self.Theme.TopBar
+    self.FloatingButton.Position = UDim2.new(0, 30, 0.5, -25)
+    self.FloatingButton.Size = UDim2.new(0, 46, 0, 46)
+    self.FloatingButton.Visible = false
+    self.FloatingButton.AutoButtonColor = false
 
     local FloatCorner = Instance.new("UICorner")
     FloatCorner.CornerRadius = UDim.new(1, 0)
-    FloatCorner.Parent = FloatingButton
+    FloatCorner.Parent = self.FloatingButton
 
     local FloatStroke = Instance.new("UIStroke")
-    FloatStroke.Parent = FloatingButton
+    FloatStroke.Parent = self.FloatingButton
     FloatStroke.Color = self.Theme.Accent
     FloatStroke.Thickness = 2
 
-    if iconUrl then
-        FloatingButton.Image = iconUrl
-    end
+    if iconUrl then self.FloatingButton.Image = iconUrl end
 
     MinimizeButton.MouseButton1Click:Connect(function()
         self.MainFrame.Visible = false
-        FloatingButton.Visible = true
+        self.FloatingButton.Visible = true
     end)
 
-    FloatingButton.MouseButton1Click:Connect(function()
-        FloatingButton.Visible = false
+    self.FloatingButton.MouseButton1Click:Connect(function()
+        self.FloatingButton.Visible = false
         self.MainFrame.Visible = true
     end)
 
@@ -137,18 +150,12 @@ function Library.new(scriptName, iconUrl, customTheme)
             dragging = true
             dragStart = input.Position
             startPos = self.MainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
         end
     end)
-
     self.TopBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
@@ -156,12 +163,30 @@ function Library.new(scriptName, iconUrl, customTheme)
         end
     end)
 
-    -- Панель навигации по вкладкам слева
+    -- Перетаскивание плавающей кнопки
+    local fDragging, fInput, fStart, fPos
+    self.FloatingButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            fDragging = true; fStart = input.Position; fPos = self.FloatingButton.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then fDragging = false end end)
+        end
+    end)
+    self.FloatingButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then fInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == fInput and fDragging then
+            local delta = input.Position - fStart
+            self.FloatingButton.Position = UDim2.new(fPos.X.Scale, fPos.X.Offset + delta.X, fPos.Y.Scale, fPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    -- Сайдбар вкладок слева (стиль Neverlose / Vertex)
     self.TabList = Instance.new("ScrollingFrame")
     self.TabList.Parent = self.MainFrame
     self.TabList.BackgroundTransparency = 1
-    self.TabList.Position = UDim2.new(0, 10, 0, 48)
-    self.TabList.Size = UDim2.new(0, 130, 1, -58)
+    self.TabList.Position = UDim2.new(0, 12, 0, 52)
+    self.TabList.Size = UDim2.new(0, 140, 1, -64)
     self.TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
     self.TabList.ScrollBarThickness = 0
 
@@ -172,25 +197,23 @@ function Library.new(scriptName, iconUrl, customTheme)
 
     -- Контейнер страниц
     self.PagesContainer = Instance.new("Folder")
-    self.PagesContainer.Name = "PagesContainer"
     self.PagesContainer.Parent = self.MainFrame
 
     self.FirstTab = true
-
     return self
 end
 
--- Метод создания вкладки с кастомной иконкой/эмодзи
+-- Создание вкладки
 function Library:AddTab(tabName, iconText)
     local tabObj = {}
 
     local TabButton = Instance.new("TextButton")
     TabButton.Parent = self.TabList
-    TabButton.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-    TabButton.Size = UDim2.new(1, 0, 0, 36)
+    TabButton.BackgroundColor3 = self.Theme.ElementBg
+    TabButton.Size = UDim2.new(1, 0, 0, 38)
     TabButton.AutoButtonColor = false
     TabButton.Font = Enum.Font.GothamMedium
-    TabButton.Text = "   " .. (iconText or "📁") .. "   " .. tabName
+    TabButton.Text = "    " .. (iconText or "▪") .. "    " .. tabName
     TabButton.TextColor3 = self.Theme.DarkText
     TabButton.TextSize = 12
     TabButton.TextXAlignment = Enum.TextXAlignment.Left
@@ -199,17 +222,22 @@ function Library:AddTab(tabName, iconText)
     TabCorner.CornerRadius = UDim.new(0, 6)
     TabCorner.Parent = TabButton
 
-    -- Страница содержимого
+    local TabStroke = Instance.new("UIStroke")
+    TabStroke.Parent = TabButton
+    TabStroke.Color = self.Theme.Stroke
+    TabStroke.Thickness = 1
+
+    -- Страница
     local PageContent = Instance.new("ScrollingFrame")
     PageContent.Parent = self.PagesContainer
     PageContent.Active = true
     PageContent.BackgroundTransparency = 1
-    PageContent.Position = UDim2.new(0, 150, 0, 48)
-    PageContent.Size = UDim2.new(1, -160, 1, -58)
+    PageContent.Position = UDim2.new(0, 164, 0, 52)
+    PageContent.Size = UDim2.new(1, -176, 1, -64)
     PageContent.Visible = false
     PageContent.CanvasSize = UDim2.new(0, 0, 2, 0)
     PageContent.ScrollBarThickness = 3
-    PageContent.ScrollBarImageColor3 = Color3.fromRGB(45, 45, 55)
+    PageContent.ScrollBarImageColor3 = self.Theme.Accent
 
     local PageLayout = Instance.new("UIListLayout")
     PageLayout.Parent = PageContent
@@ -219,29 +247,30 @@ function Library:AddTab(tabName, iconText)
     if self.FirstTab then
         PageContent.Visible = true
         TabButton.TextColor3 = self.Theme.Text
-        TabButton.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+        TabButton.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+        TabStroke.Color = self.Theme.Accent
         self.FirstTab = false
     end
 
     TabButton.MouseButton1Click:Connect(function()
-        for _, page in pairs(self.PagesContainer:GetChildren()) do
-            if page:IsA("ScrollingFrame") then page.Visible = false end
-        end
+        for _, page in pairs(self.PagesContainer:GetChildren()) do if page:IsA("ScrollingFrame") then page.Visible = false end end
         for _, btn in pairs(self.TabList:GetChildren()) do
             if btn:IsA("TextButton") then
-                TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = self.Theme.DarkText, BackgroundColor3 = Color3.fromRGB(22, 22, 28)}):Play()
+                TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = self.Theme.DarkText, BackgroundColor3 = self.Theme.ElementBg}):Play()
+                btn.UIStroke.Color = self.Theme.Stroke
             end
         end
         PageContent.Visible = true
-        TweenService:Create(TabButton, TweenInfo.new(0.2), {TextColor3 = self.Theme.Text, BackgroundColor3 = Color3.fromRGB(28, 28, 36)}):Play()
+        TweenService:Create(TabButton, TweenInfo.new(0.2), {TextColor3 = self.Theme.Text, BackgroundColor3 = Color3.fromRGB(24, 24, 32)}):Play()
+        TabStroke.Color = self.Theme.Accent
     end)
 
-    -- Добавление элементов во вкладку
+    -- Элемент: Toggle
     function tabObj:AddToggle(text, callback)
         local ToggleBtn = Instance.new("TextButton")
         ToggleBtn.Parent = PageContent
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-        ToggleBtn.Size = UDim2.new(1, -10, 0, 36)
+        ToggleBtn.BackgroundColor3 = self.Theme.ElementBg
+        ToggleBtn.Size = UDim2.new(1, -10, 0, 38)
         ToggleBtn.AutoButtonColor = false
         ToggleBtn.Font = Enum.Font.Gotham
         ToggleBtn.Text = "  " .. text
@@ -255,13 +284,13 @@ function Library:AddTab(tabName, iconText)
 
         local Stroke = Instance.new("UIStroke")
         Stroke.Parent = ToggleBtn
-        Stroke.Color = Color3.fromRGB(35, 35, 45)
+        Stroke.Color = self.Theme.Stroke
         Stroke.Thickness = 1
 
         local Indicator = Instance.new("Frame")
         Indicator.Parent = ToggleBtn
-        Indicator.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-        Indicator.Position = UDim2.new(1, -30, 0.5, -9)
+        Indicator.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+        Indicator.Position = UDim2.new(1, -32, 0.5, -9)
         Indicator.Size = UDim2.new(0, 18, 0, 18)
 
         local IndCorner = Instance.new("UICorner")
@@ -272,17 +301,18 @@ function Library:AddTab(tabName, iconText)
         ToggleBtn.MouseButton1Click:Connect(function()
             state = not state
             TweenService:Create(Indicator, TweenInfo.new(0.15), {
-                BackgroundColor3 = state and self.Theme.Accent or Color3.fromRGB(45, 45, 55)
+                BackgroundColor3 = state and self.Theme.Accent or Color3.fromRGB(28, 28, 36)
             }):Play()
             pcall(callback, state)
         end)
     end
 
+    -- Элемент: Slider (ползунок)
     function tabObj:AddSlider(text, min, max, default, callback)
         local SliderFrame = Instance.new("Frame")
         SliderFrame.Parent = PageContent
-        SliderFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-        SliderFrame.Size = UDim2.new(1, -10, 0, 50)
+        SliderFrame.BackgroundColor3 = self.Theme.ElementBg
+        SliderFrame.Size = UDim2.new(1, -10, 0, 52)
 
         local Corner = Instance.new("UICorner")
         Corner.CornerRadius = UDim.new(0, 6)
@@ -290,13 +320,13 @@ function Library:AddTab(tabName, iconText)
 
         local Stroke = Instance.new("UIStroke")
         Stroke.Parent = SliderFrame
-        Stroke.Color = Color3.fromRGB(35, 35, 45)
+        Stroke.Color = self.Theme.Stroke
         Stroke.Thickness = 1
 
         local TitleLabel = Instance.new("TextLabel")
         TitleLabel.Parent = SliderFrame
         TitleLabel.BackgroundTransparency = 1
-        TitleLabel.Position = UDim2.new(0, 10, 0, 6)
+        TitleLabel.Position = UDim2.new(0, 10, 0, 8)
         TitleLabel.Size = UDim2.new(1, -20, 0, 18)
         TitleLabel.Font = Enum.Font.Gotham
         TitleLabel.Text = text
@@ -307,7 +337,7 @@ function Library:AddTab(tabName, iconText)
         local ValueLabel = Instance.new("TextLabel")
         ValueLabel.Parent = SliderFrame
         ValueLabel.BackgroundTransparency = 1
-        ValueLabel.Position = UDim2.new(0, 10, 0, 6)
+        ValueLabel.Position = UDim2.new(0, 10, 0, 8)
         ValueLabel.Size = UDim2.new(1, -20, 0, 18)
         ValueLabel.Font = Enum.Font.GothamBold
         ValueLabel.Text = tostring(default or min)
@@ -317,8 +347,8 @@ function Library:AddTab(tabName, iconText)
 
         local Track = Instance.new("Frame")
         Track.Parent = SliderFrame
-        Track.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-        Track.Position = UDim2.new(0, 10, 0, 32)
+        Track.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
+        Track.Position = UDim2.new(0, 10, 0, 34)
         Track.Size = UDim2.new(1, -20, 0, 6)
 
         local TrackCorner = Instance.new("UICorner")
@@ -345,30 +375,24 @@ function Library:AddTab(tabName, iconText)
 
         Track.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                update(input)
+                dragging = true; update(input)
             end
         end)
-
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
         end)
-
         UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                update(input)
-            end
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input) end
         end)
     end
 
+    -- Элемент: Dropdown (выпадающий список)
     function tabObj:AddDropdown(text, options, callback)
         local opened = false
         local DropdownFrame = Instance.new("Frame")
         DropdownFrame.Parent = PageContent
-        DropdownFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-        DropdownFrame.Size = UDim2.new(1, -10, 0, 36)
+        DropdownFrame.BackgroundColor3 = self.Theme.ElementBg
+        DropdownFrame.Size = UDim2.new(1, -10, 0, 38)
         DropdownFrame.ClipsDescendants = true
 
         local Corner = Instance.new("UICorner")
@@ -377,13 +401,13 @@ function Library:AddTab(tabName, iconText)
 
         local Stroke = Instance.new("UIStroke")
         Stroke.Parent = DropdownFrame
-        Stroke.Color = Color3.fromRGB(35, 35, 45)
+        Stroke.Color = self.Theme.Stroke
         Stroke.Thickness = 1
 
         local DropBtn = Instance.new("TextButton")
         DropBtn.Parent = DropdownFrame
         DropBtn.BackgroundTransparency = 1
-        DropBtn.Size = UDim2.new(1, 0, 0, 36)
+        DropBtn.Size = UDim2.new(1, 0, 0, 38)
         DropBtn.Font = Enum.Font.Gotham
         DropBtn.Text = "  " .. text .. " : " .. (options[1] or "")
         DropBtn.TextColor3 = self.Theme.Text
@@ -395,23 +419,26 @@ function Library:AddTab(tabName, iconText)
         ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         ListLayout.Padding = UDim.new(0, 2)
 
-        local totalHeight = 38
+        local totalHeight = 40
         for _, opt in ipairs(options) do
-            totalHeight = totalHeight + 30
+            totalHeight = totalHeight + 32
             local OptBtn = Instance.new("TextButton")
             OptBtn.Parent = DropdownFrame
-            OptBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
-            OptBtn.Size = UDim2.new(1, 0, 0, 28)
+            OptBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+            OptBtn.Size = UDim2.new(1, 0, 0, 30)
             OptBtn.Font = Enum.Font.Gotham
             OptBtn.Text = "    " .. opt
             OptBtn.TextColor3 = self.Theme.DarkText
             OptBtn.TextSize = 11
             OptBtn.TextXAlignment = Enum.TextXAlignment.Left
 
+            OptBtn.MouseEnter:Connect(function() TweenService:Create(OptBtn, TweenInfo.new(0.1), {TextColor3 = self.Theme.Text}):Play() end)
+            OptBtn.MouseLeave:Connect(function() TweenService:Create(OptBtn, TweenInfo.new(0.1), {TextColor3 = self.Theme.DarkText}):Play() end)
+
             OptBtn.MouseButton1Click:Connect(function()
                 DropBtn.Text = "  " .. text .. " : " .. opt
                 opened = false
-                TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 36)}):Play()
+                TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 38)}):Play()
                 pcall(callback, opt)
             end)
         end
@@ -419,7 +446,7 @@ function Library:AddTab(tabName, iconText)
         DropBtn.MouseButton1Click:Connect(function()
             opened = not opened
             TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {
-                Size = opened and UDim2.new(1, -10, 0, totalHeight) or UDim2.new(1, -10, 0, 36)
+                Size = opened and UDim2.new(1, -10, 0, totalHeight) or UDim2.new(1, -10, 0, 38)
             }):Play()
         end)
     end
@@ -428,4 +455,3 @@ function Library:AddTab(tabName, iconText)
 end
 
 return Library
-
