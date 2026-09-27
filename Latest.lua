@@ -1,6 +1,6 @@
 -- promt by @mopscode
 -- language: Lua, file: VantaUI.lua, target: Roblox (any executor, low-end safe)
--- v4.2: fixed absolute container bounds for sidebar and content
+-- v4.4: added Dropdown element (WindUI style)
 
 local VantaUI = {}
 VantaUI.__index = VantaUI
@@ -207,7 +207,6 @@ function VantaUI:Window(cfg)
     local btnMin   = ctrlBtn("–", 32, THEME.accent_dim)
     local btnClose = ctrlBtn("×", 58, THEME.danger)
 
-    -- Жёсткие размеры сайдбара без использования относительных констрейнтов
     local sidebar = new("Frame", {
         Position = UDim2.new(0, 0, 0, 36),
         Size = UDim2.new(0, 160, 1, -36),
@@ -232,7 +231,6 @@ function VantaUI:Window(cfg)
     }, sidebar)
     new("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabList)
 
-    -- Жёсткие размеры контента
     local content = new("Frame", {
         Position = UDim2.new(0, 160, 0, 36),
         Size = UDim2.new(1, -160, 1, -36),
@@ -279,7 +277,8 @@ function VantaUI:Window(cfg)
         }, content)
         new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, page)
 
-        local tab = { __index = getmetatable(win).__index, page = page, btn = btn, win = win, sections = {} }
+        local tab = { page = page, btn = btn, win = win, sections = {} }
+        setmetatable(tab, win)
 
         local function activate()
             for _, t in ipairs(win.tabs) do
@@ -321,7 +320,8 @@ function VantaUI:Window(cfg)
                 ZIndex = 5,
             }, wrap)
 
-            local section = { __index = getmetatable(tab).__index, frame = wrap, tab = tab, win = win }
+            local section = { frame = wrap, tab = tab, win = win }
+            setmetatable(section, tab)
             table.insert(tab.sections, section)
 
             local function rowScaffold(label, height)
@@ -331,7 +331,7 @@ function VantaUI:Window(cfg)
                     ZIndex = 5,
                 }, wrap)
                 new("TextLabel", {
-                    Size = UDim2.new(1, -80, 1, 0), BackgroundTransparency = 1,
+                    Size = UDim2.new(1, -110, 1, 0), BackgroundTransparency = 1,
                     Font = FONT_MED, Text = label, TextColor3 = THEME.text,
                     TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
                     ZIndex = 6,
@@ -385,10 +385,10 @@ function VantaUI:Window(cfg)
                 local row = rowScaffold(name or "Button", 22)
                 local b = new("TextButton", {
                     AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
-                    Size = UDim2.fromOffset(70, 18),
+                    Size = UDim2.fromOffset(90, 18),
                     BackgroundColor3 = THEME.row, BorderSizePixel = 0,
-                    Font = FONT_MED, Text = "···", TextColor3 = THEME.text_dim,
-                    TextSize = 12, AutoButtonColor = false,
+                    Font = FONT_MED, Text = "Нажать", TextColor3 = THEME.text_dim,
+                    TextSize = 11, AutoButtonColor = false,
                     ZIndex = 6,
                 }, row)
                 corner(b, 4); stroke(b, THEME.border, 1, 0.4)
@@ -398,11 +398,113 @@ function VantaUI:Window(cfg)
                 return b
             end
 
+            -- ДОБАВЛЕНО: Выпадающий список (Dropdown) в стиле WindUI
+            function section:CreateDropdown(name, options, default, callback)
+                options = options or {}
+                local selected = default or options[1] or "Выбрать"
+                local opened = false
+
+                local row = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 26), BackgroundTransparency = 1,
+                    ZIndex = 5,
+                }, wrap)
+                
+                new("TextLabel", {
+                    Size = UDim2.new(1, -110, 0, 26), BackgroundTransparency = 1,
+                    Font = FONT_MED, Text = name or "Dropdown", TextColor3 = THEME.text,
+                    TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 6,
+                }, row)
+
+                local mainBtn = new("TextButton", {
+                    AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 3),
+                    Size = UDim2.fromOffset(100, 20),
+                    BackgroundColor3 = THEME.row, BorderSizePixel = 0,
+                    Font = FONT_MED, Text = tostring(selected) .. " ▾", TextColor3 = THEME.text_dim,
+                    TextSize = 11, AutoButtonColor = false,
+                    ZIndex = 6, ClipsDescendants = true,
+                }, row)
+                corner(mainBtn, 4); stroke(mainBtn, THEME.border, 1, 0.4)
+
+                local listFrame = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundColor3 = THEME.bg, BorderSizePixel = 0,
+                    Visible = false, ZIndex = 50,
+                }, win.gui) -- Создаем поверх окна, чтобы список не обрезался
+                corner(listFrame, 6); stroke(listFrame, THEME.border, 1, 0)
+                new("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, listFrame)
+                new("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, listFrame)
+
+                local function updateDropdownPos()
+                    local absPos = mainBtn.AbsolutePosition
+                    local absSize = mainBtn.AbsoluteSize
+                    listFrame.Position = UDim2.fromOffset(absPos.X, absPos.Y + absSize.Y + 4)
+                    listFrame.Size = UDim2.fromOffset(absSize.X, 0)
+                end
+
+                local function closeList()
+                    if not opened then return end
+                    opened = false
+                    listFrame.Visible = false
+                end
+
+                local function openList()
+                    if opened then return end
+                    opened = true
+                    updateDropdownPos()
+                    listFrame.Visible = true
+                end
+
+                mainBtn.MouseButton1Click:Connect(function()
+                    if opened then closeList() else openList() end
+                end)
+
+                -- Очистка и заполнение опций
+                local function refreshOptions()
+                    for _, child in ipairs(listFrame:GetChildren()) do
+                        if child:IsA("TextButton") then child:Destroy() end
+                    end
+
+                    for _, opt in ipairs(options) do
+                        local optBtn = new("TextButton", {
+                            Size = UDim2.new(1, 0, 0, 20),
+                            BackgroundColor3 = (opt == selected) and THEME.accent_bg or THEME.row,
+                            BorderSizePixel = 0, Font = FONT_MED,
+                            Text = tostring(opt), TextColor3 = (opt == selected) and THEME.text or THEME.text_dim,
+                            TextSize = 11, AutoButtonColor = false, ZIndex = 51,
+                        }, listFrame)
+                        corner(optBtn, 4)
+
+                        optBtn.MouseButton1Click:Connect(function()
+                            selected = opt
+                            mainBtn.Text = tostring(selected) .. " ▾"
+                            closeList()
+                            if callback then callback(selected) end
+                            refreshOptions()
+                        end)
+                    end
+                end
+                refreshOptions()
+
+                return {
+                    Set = function(_, v)
+                        selected = v
+                        mainBtn.Text = tostring(selected) .. " ▾"
+                        refreshOptions()
+                    end,
+                    Get = function() return selected end,
+                    Refresh = function(_, newOpts)
+                        options = newOpts
+                        refreshOptions()
+                    end
+                }
+            end
+
             function section:CreateSlider(name, min, max, default, callback)
                 min, max = min or 0, max or 100
                 local step  = 1
                 local value = default or min
-                local suffix = ""
 
                 local row = new("Frame", {
                     Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1,
@@ -417,7 +519,7 @@ function VantaUI:Window(cfg)
                 local valLbl = new("TextLabel", {
                     AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
                     Size = UDim2.fromOffset(56, 14), BackgroundTransparency = 1,
-                    Font = FONT_MED, Text = tostring(value) .. suffix,
+                    Font = FONT_MED, Text = tostring(value),
                     TextColor3 = THEME.accent, TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Right,
                     ZIndex = 6,
@@ -453,14 +555,14 @@ function VantaUI:Window(cfg)
                     local r2 = (value - min) / math.max(max - min, 1e-6)
                     fill.Size = UDim2.new(r2, 0, 1, 0)
                     dot.Position = UDim2.new(r2, 0, 0.5, 0)
-                    valLbl.Text = tostring(value) .. suffix
+                    valLbl.Text = tostring(value)
                     if callback then callback(value) end
                 end
                 local function render()
                     local r2 = (value - min) / math.max(max - min, 1e-6)
                     fill.Size = UDim2.new(r2, 0, 1, 0)
                     dot.Position = UDim2.new(r2, 0, 0.5, 0)
-                    valLbl.Text = tostring(value) .. suffix
+                    valLbl.Text = tostring(value)
                 end
                 render()
 
@@ -482,71 +584,6 @@ function VantaUI:Window(cfg)
                 return {
                     Set = function(_, v) value = math.clamp(v, min, max); render() end,
                     Get = function() return value end,
-                }
-            end
-
-            function section:CreateKeybind(name, default, callback)
-                local current = default or Enum.KeyCode.E
-                local listening = false
-                local row = rowScaffold(name or "Keybind", 22)
-
-                local keyBtn = new("TextButton", {
-                    AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
-                    Size = UDim2.fromOffset(60, 18),
-                    BackgroundColor3 = THEME.row, BorderSizePixel = 0,
-                    Font = FONT_MED, Text = current.Name, TextColor3 = THEME.text_dim,
-                    TextSize = 11, AutoButtonColor = false,
-                    ZIndex = 6,
-                }, row)
-                corner(keyBtn, 4); stroke(keyBtn, THEME.border, 1, 0.4)
-                keyBtn.MouseButton1Click:Connect(function()
-                    listening = true; keyBtn.Text = "..."; keyBtn.TextColor3 = THEME.accent
-                end)
-                UserInputService.InputBegan:Connect(function(input, gpe)
-                    if gpe then return end
-                    if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-                        current = input.KeyCode
-                        keyBtn.Text = current.Name; keyBtn.TextColor3 = THEME.text_dim
-                        listening = false
-                    elseif not listening and input.KeyCode == current then
-                        if callback then callback() end
-                    end
-                end)
-                return {
-                    Set = function(_, k) current = k; keyBtn.Text = k.Name end,
-                    Get = function() return current end,
-                }
-            end
-
-            function section:CreateTextbox(name, default, callback)
-                local row = new("Frame", {
-                    Size = UDim2.new(1, 0, 0, 34), BackgroundTransparency = 1,
-                    ZIndex = 5,
-                }, wrap)
-                new("TextLabel", {
-                    Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency,
-                    Font = FONT_MED, Text = name or "Input", TextColor3 = THEME.text,
-                    TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 6,
-                }, row)
-                local box = new("TextBox", {
-                    Position = UDim2.new(0, 0, 1, -20),
-                    Size = UDim2.new(1, 0, 0, 20),
-                    BackgroundColor3 = THEME.bg, BorderSizePixel = 0,
-                    Font = FONT_REG, Text = default or "", PlaceholderText = "...",
-                    TextColor3 = THEME.text, PlaceholderColor3 = THEME.text_mute,
-                    TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
-                    ClearTextOnFocus = false,
-                    ZIndex = 6,
-                }, row)
-                corner(box, 5); stroke(box, THEME.border, 1, 0.4)
-                new("UIPadding", { PaddingLeft = UDim.new(0, 6) }, box)
-                box.FocusLost:Connect(function(enter)
-                    if callback then callback(box.Text, enter) end
-                end)
-                return {
-                    Set = function(_, v) box.Text = v end,
-                    Get = function() return box.Text end,
                 }
             end
 
