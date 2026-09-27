@@ -1,6 +1,6 @@
 -- promt by @mopscode
 -- language: Lua, file: VantaUI.lua, target: Roblox (any executor, low-end safe)
--- v4.1: fixed sidebar sizing (RelativeYY bug resolved) & content bounds
+-- v4.2: fixed absolute container bounds for sidebar and content
 
 local VantaUI = {}
 VantaUI.__index = VantaUI
@@ -166,17 +166,20 @@ function VantaUI:Window(cfg)
     local topbar = new("Frame", {
         Size = UDim2.new(1, 0, 0, 36),
         BackgroundColor3 = THEME.bg_alt, BorderSizePixel = 0,
+        ZIndex = 5,
     }, panel)
     corner(topbar, 10)
+    
     new("Frame", {
         Size = UDim2.new(1, 0, 0, 10), Position = UDim2.new(0, 0, 1, -10),
-        BackgroundColor3 = THEME.bg_alt, BorderSizePixel = 0, ZIndex = topbar.ZIndex + 1,
+        BackgroundColor3 = THEME.bg_alt, BorderSizePixel = 0, ZIndex = 6,
     }, topbar)
 
     new("Frame", {
         Position = UDim2.fromOffset(14, 15),
         Size = UDim2.fromOffset(6, 6),
         BackgroundColor3 = THEME.accent, BorderSizePixel = 0,
+        ZIndex = 7,
     }, topbar)
 
     new("TextLabel", {
@@ -185,6 +188,7 @@ function VantaUI:Window(cfg)
         Font = FONT_BOLD, Text = title, TextColor3 = THEME.text,
         TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
+        ZIndex = 7,
     }, topbar)
 
     local function ctrlBtn(glyph, xOffset, hoverColor)
@@ -193,7 +197,7 @@ function VantaUI:Window(cfg)
             Size = UDim2.fromOffset(20, 20),
             BackgroundColor3 = THEME.bg, BorderSizePixel = 0,
             Font = FONT_MED, Text = glyph, TextColor3 = THEME.text_dim,
-            TextSize = 13, AutoButtonColor = false, ZIndex = topbar.ZIndex + 2,
+            TextSize = 13, AutoButtonColor = false, ZIndex = 8,
         }, topbar)
         corner(b, 5)
         b.MouseEnter:Connect(function() tween(b, 0.1, { BackgroundColor3 = hoverColor, TextColor3 = THEME.text }) end)
@@ -203,17 +207,19 @@ function VantaUI:Window(cfg)
     local btnMin   = ctrlBtn("–", 32, THEME.accent_dim)
     local btnClose = ctrlBtn("×", 58, THEME.danger)
 
-    -- ИСПРАВЛЕНО: Сайдбар теперь растягивается корректно по высоте с учетом шапки (36 пикселей)
+    -- Жёсткие размеры сайдбара без использования относительных констрейнтов
     local sidebar = new("Frame", {
         Position = UDim2.new(0, 0, 0, 36),
         Size = UDim2.new(0, 160, 1, -36),
         BackgroundColor3 = THEME.sidebar, BorderSizePixel = 0,
+        ZIndex = 2,
     }, panel)
     
     new("Frame", {
-        Size = UDim2.new(0, 1, 1, 0),
         Position = UDim2.new(1, -1, 0, 0),
+        Size = UDim2.new(0, 1, 1, 0),
         BackgroundColor3 = THEME.border, BorderSizePixel = 0,
+        ZIndex = 3,
     }, sidebar)
 
     local tabList = new("ScrollingFrame", {
@@ -222,14 +228,16 @@ function VantaUI:Window(cfg)
         BackgroundTransparency = 1, BorderSizePixel = 0,
         ScrollBarThickness = 0, CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ZIndex = 3,
     }, sidebar)
     new("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabList)
 
-    -- ИСПРАВЛЕНО: Область контента
+    -- Жёсткие размеры контента
     local content = new("Frame", {
         Position = UDim2.new(0, 160, 0, 36),
         Size = UDim2.new(1, -160, 1, -36),
         BackgroundTransparency = 1,
+        ZIndex = 2,
     }, panel)
     win.content = content
 
@@ -255,6 +263,7 @@ function VantaUI:Window(cfg)
             Font = FONT_MED, Text = "  " .. name, TextColor3 = THEME.text_dim,
             TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
             AutoButtonColor = false,
+            ZIndex = 4,
         }, tabList)
         corner(btn, 6)
 
@@ -266,6 +275,7 @@ function VantaUI:Window(cfg)
             CanvasSize = UDim2.new(0, 0, 0, 0),
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
             Visible = false,
+            ZIndex = 3,
         }, content)
         new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, page)
 
@@ -293,6 +303,7 @@ function VantaUI:Window(cfg)
                 Size = UDim2.new(1, 0, 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundColor3 = THEME.bg_alt, BorderSizePixel = 0,
+                ZIndex = 4,
             }, page)
             corner(wrap, 8)
             stroke(wrap, THEME.border, 1, 0.35)
@@ -307,6 +318,7 @@ function VantaUI:Window(cfg)
                 Font = FONT_BOLD, Text = string.upper(name),
                 TextColor3 = THEME.text_mute, TextSize = 10,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 5,
             }, wrap)
 
             local section = { __index = getmetatable(tab).__index, frame = wrap, tab = tab, win = win }
@@ -316,11 +328,13 @@ function VantaUI:Window(cfg)
                 local row = new("Frame", {
                     Size = UDim2.new(1, 0, 0, height or 22),
                     BackgroundTransparency = 1,
+                    ZIndex = 5,
                 }, wrap)
                 new("TextLabel", {
                     Size = UDim2.new(1, -80, 1, 0), BackgroundTransparency = 1,
                     Font = FONT_MED, Text = label, TextColor3 = THEME.text,
                     TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 6,
                 }, row)
                 return row
             end
@@ -333,12 +347,14 @@ function VantaUI:Window(cfg)
                     AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
                     Size = UDim2.fromOffset(30, 16),
                     BackgroundColor3 = THEME.track, BorderSizePixel = 0,
+                    ZIndex = 6,
                 }, row)
                 corner(track, 8)
                 local knob = new("Frame", {
                     AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 2, 0.5, 0),
                     Size = UDim2.fromOffset(12, 12),
                     BackgroundColor3 = THEME.text_dim, BorderSizePixel = 0,
+                    ZIndex = 7,
                 }, track)
                 corner(knob, 6)
 
@@ -353,7 +369,7 @@ function VantaUI:Window(cfg)
 
                 local click = new("TextButton", {
                     Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
-                    Text = "", AutoButtonColor = false, ZIndex = row.ZIndex + 2,
+                    Text = "", AutoButtonColor = false, ZIndex = 8,
                 }, row)
                 click.MouseButton1Click:Connect(function()
                     state = not state; render()
@@ -373,6 +389,7 @@ function VantaUI:Window(cfg)
                     BackgroundColor3 = THEME.row, BorderSizePixel = 0,
                     Font = FONT_MED, Text = "···", TextColor3 = THEME.text_dim,
                     TextSize = 12, AutoButtonColor = false,
+                    ZIndex = 6,
                 }, row)
                 corner(b, 4); stroke(b, THEME.border, 1, 0.4)
                 b.MouseEnter:Connect(function() tween(b, 0.1, { BackgroundColor3 = THEME.bg_alt, TextColor3 = THEME.text }) end)
@@ -389,11 +406,13 @@ function VantaUI:Window(cfg)
 
                 local row = new("Frame", {
                     Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1,
+                    ZIndex = 5,
                 }, wrap)
                 new("TextLabel", {
                     Size = UDim2.new(1, -60, 0, 14), BackgroundTransparency = 1,
                     Font = FONT_MED, Text = name or "Slider", TextColor3 = THEME.text,
                     TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 6,
                 }, row)
                 local valLbl = new("TextLabel", {
                     AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0),
@@ -401,23 +420,27 @@ function VantaUI:Window(cfg)
                     Font = FONT_MED, Text = tostring(value) .. suffix,
                     TextColor3 = THEME.accent, TextSize = 12,
                     TextXAlignment = Enum.TextXAlignment.Right,
+                    ZIndex = 6,
                 }, row)
 
                 local bar = new("Frame", {
                     Position = UDim2.new(0, 0, 1, -10),
                     Size = UDim2.new(1, 0, 0, 4),
                     BackgroundColor3 = THEME.track, BorderSizePixel = 0,
+                    ZIndex = 6,
                 }, row)
                 corner(bar, 2)
                 local fill = new("Frame", {
                     Size = UDim2.new(0, 0, 1, 0),
                     BackgroundColor3 = THEME.accent, BorderSizePixel = 0,
+                    ZIndex = 7,
                 }, bar)
                 corner(fill, 2)
                 local dot = new("Frame", {
                     AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 0, 0.5, 0),
                     Size = UDim2.fromOffset(8, 8),
                     BackgroundColor3 = THEME.text, BorderSizePixel = 0,
+                    ZIndex = 8,
                 }, bar)
                 corner(dot, 4)
 
@@ -473,6 +496,7 @@ function VantaUI:Window(cfg)
                     BackgroundColor3 = THEME.row, BorderSizePixel = 0,
                     Font = FONT_MED, Text = current.Name, TextColor3 = THEME.text_dim,
                     TextSize = 11, AutoButtonColor = false,
+                    ZIndex = 6,
                 }, row)
                 corner(keyBtn, 4); stroke(keyBtn, THEME.border, 1, 0.4)
                 keyBtn.MouseButton1Click:Connect(function()
@@ -497,11 +521,13 @@ function VantaUI:Window(cfg)
             function section:CreateTextbox(name, default, callback)
                 local row = new("Frame", {
                     Size = UDim2.new(1, 0, 0, 34), BackgroundTransparency = 1,
+                    ZIndex = 5,
                 }, wrap)
                 new("TextLabel", {
-                    Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency,
                     Font = FONT_MED, Text = name or "Input", TextColor3 = THEME.text,
                     TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 6,
                 }, row)
                 local box = new("TextBox", {
                     Position = UDim2.new(0, 0, 1, -20),
@@ -511,6 +537,7 @@ function VantaUI:Window(cfg)
                     TextColor3 = THEME.text, PlaceholderColor3 = THEME.text_mute,
                     TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
                     ClearTextOnFocus = false,
+                    ZIndex = 6,
                 }, row)
                 corner(box, 5); stroke(box, THEME.border, 1, 0.4)
                 new("UIPadding", { PaddingLeft = UDim.new(0, 6) }, box)
