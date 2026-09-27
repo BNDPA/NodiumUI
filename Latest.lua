@@ -1,7 +1,7 @@
 -- promt by @mopscode
--- language: Lua, file: NodiumUI.lua, target: Roblox (any executor, low-end safe)
+-- language: Lua, file: NodiumUI.lua, target: Roblox (any executor)
 -- layout: topbar tabs · subtitle pills · section cards · footer status+config
--- default title: "NodiumUI" (overridable via Window{title=...})
+-- default title: "NodiumUI"
 
 local NodiumUI = {}
 NodiumUI.__index = NodiumUI
@@ -12,7 +12,6 @@ local TweenService     = game:GetService("TweenService")
 local CoreGui          = game:GetService("CoreGui")
 local LocalPlayer      = Players.LocalPlayer
 
--- promt by @mopscode — palette (opaque black, orange accent)
 local THEME = {
     bg          = Color3.fromRGB(10, 10, 12),
     card        = Color3.fromRGB(18, 18, 22),
@@ -26,7 +25,6 @@ local THEME = {
     text_mute   = Color3.fromRGB(96, 96, 106),
     accent      = Color3.fromRGB(255, 108, 42),
     accent_dim  = Color3.fromRGB(120, 52, 22),
-    accent_bg   = Color3.fromRGB(46, 26, 18),
     danger      = Color3.fromRGB(230, 80, 90),
     ok          = Color3.fromRGB(110, 200, 140),
     track       = Color3.fromRGB(46, 46, 52),
@@ -149,14 +147,13 @@ local function confirmModal(gui, text, onYes)
         b.MouseButton1Click:Connect(function() overlay:Destroy(); if cb then cb() end end)
     end
     mkBtn("Отмена", 0,   THEME.row, THEME.text)
-    mkBtn("Да",     0.5, THEME.accent, Color3.fromRGB(20, 20, 20), onYes)
+    mkBtn("Да",     0.5, THEME.accent, Color3.fromRGB(20,20,20), onYes)
 end
 
--- promt by @mopscode — Window
 function NodiumUI:Window(cfg)
     cfg = cfg or {}
-    local title    = cfg.title    or "NodiumUI"     -- user-supplied script name
-    local subtitle = cfg.subtitle or "v1.0"         -- small version label under title
+    local title    = cfg.title    or "NodiumUI"
+    local subtitle = cfg.subtitle or "v1.0"
     local footerLeft = cfg.footerLeft or "Connected"
     local footerMid  = cfg.footerMid  or "MM2"
     local vp = viewport()
@@ -178,7 +175,6 @@ function NodiumUI:Window(cfg)
     corner(panel, 12); stroke(panel, THEME.border, 1, 0)
     win.panel = panel
 
-    -- promt by @mopscode — topbar: title left · tabs center · controls right
     local topbar = new("Frame", {
         Size = UDim2.new(1, 0, 0, 46),
         BackgroundColor3 = THEME.topbar, BorderSizePixel = 0,
@@ -189,18 +185,30 @@ function NodiumUI:Window(cfg)
     }, topbar)
 
     new("TextLabel", {
-        Position = UDim2.fromOffset(18, 6),
+        Position = UDim2.fromOffset(18, 8),
         Size = UDim2.new(0, 220, 0, 22), BackgroundTransparency = 1,
         Font = FONT_BOLD, Text = title, TextColor3 = THEME.text,
         TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
     }, topbar)
     new("TextLabel", {
-        Position = UDim2.fromOffset(80, 26),
-        Size = UDim2.new(0, 180, 0, 14), BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, Text = "", -- placeholder
+    }, topbar)
+    -- subtitle placed next to title baseline (right of it)
+    local titleLbl = topbar:FindFirstChildWhichIsA("TextLabel")
+    local subLbl = new("TextLabel", {
+        Position = UDim2.new(0, 0, 0, 28),
+        Size = UDim2.new(0, 260, 0, 12), BackgroundTransparency = 1,
         Font = FONT_REG, Text = subtitle, TextColor3 = THEME.text_mute,
         TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left,
     }, topbar)
+    titleLbl:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        subLbl.Position = UDim2.new(0, 18 + titleLbl.TextBounds.X + 6, 0, 28)
+    end)
+    task.defer(function()
+        subLbl.Position = UDim2.new(0, 18 + titleLbl.TextBounds.X + 6, 0, 28)
+    end)
 
     local tabsRow = new("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
@@ -226,7 +234,7 @@ function NodiumUI:Window(cfg)
         b.MouseLeave:Connect(function() tween(b, 0.1, { BackgroundColor3 = THEME.topbar, TextColor3 = THEME.text_dim }) end)
         return b
     end
-    local btnSearch = ctrlBtn("⌕", 90, THEME.row)
+    local btnSearch = ctrlBtn("?", 90, THEME.row)
     local btnMin    = ctrlBtn("–", 56, THEME.row)
     local btnClose  = ctrlBtn("×", 22, THEME.danger)
 
@@ -236,7 +244,6 @@ function NodiumUI:Window(cfg)
         BackgroundTransparency = 1,
     }, panel)
 
-    -- promt by @mopscode — footer
     local footer = new("Frame", {
         AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0),
         Size = UDim2.new(1, 0, 0, 42),
@@ -279,6 +286,7 @@ function NodiumUI:Window(cfg)
         b.MouseButton1Click:Connect(function() if cb then cb() end end)
         return b
     end
+
     local nameBox = new("TextBox", {
         AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -250, 0.5, 0),
         Size = UDim2.fromOffset(140, 28),
@@ -311,7 +319,6 @@ function NodiumUI:Window(cfg)
 
     local pages = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, body)
 
-    -- promt by @mopscode — CreateTab
     function win:CreateTab(name)
         name = name or "Tab"
 
@@ -328,7 +335,6 @@ function NodiumUI:Window(cfg)
             Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false,
         }, pages)
 
-        -- promt by @mopscode — header: big title left, subtabs pills right
         local header = new("Frame", {
             Position = UDim2.fromOffset(18, 14),
             Size = UDim2.new(1, -36, 0, 40), BackgroundTransparency = 1,
@@ -359,6 +365,9 @@ function NodiumUI:Window(cfg)
         local defaultContent = new("Frame", {
             Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
         }, contentHolder)
+        new("UIListLayout", {
+            Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder,
+        }, defaultContent)
 
         local function activatePage()
             for _, t in ipairs(win.tabs) do
@@ -382,7 +391,6 @@ function NodiumUI:Window(cfg)
         }
         table.insert(win.tabs, tab)
 
-        -- promt by @mopscode — CreateSubTab(name, twoColumns)
         function tab:CreateSubTab(subName, twoColumns)
             subName = subName or "Sub"
 
@@ -426,11 +434,15 @@ function NodiumUI:Window(cfg)
                     s.pill.TextColor3 = THEME.text_dim
                 end
                 subContent.Visible = true
+                defaultContent.Visible = false
                 pill.BackgroundColor3 = THEME.row
                 pill.TextColor3 = THEME.text
             end
             pill.MouseButton1Click:Connect(activateSub)
-            if #tab.subtabs == 0 then activateSub() end
+            if #tab.subtabs == 0 then
+                activateSub()
+                defaultContent.Visible = false
+            end
             table.insert(tab.subtabs, sub)
 
             function sub:CreateSection(secName)
@@ -439,15 +451,16 @@ function NodiumUI:Window(cfg)
             return sub
         end
 
-        -- promt by @mopscode — section on tab directly (if no subtabs used)
         function tab:CreateSection(secName)
+            if #tab.subtabs > 0 then
+                return NodiumUI._section(tab.subtabs[1], secName or "Section")
+            end
             return NodiumUI._section(tab, secName or "Section")
         end
 
         return tab
     end
 
-    -- promt by @mopscode — show/hide
     UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
@@ -459,9 +472,8 @@ function NodiumUI:Window(cfg)
     return setmetatable(win, win)
 end
 
--- promt by @mopscode — shared section factory
 function NodiumUI._section(parent, secName)
-    local hostFrame = parent.frame or parent.defaultContent or parent.content
+    local hostFrame = parent.frame or parent.defaultContent
 
     local wrap = new("Frame", {
         Size = UDim2.new(1, 0, 0, 0),
@@ -475,7 +487,6 @@ function NodiumUI._section(parent, secName)
     }, wrap)
     new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, wrap)
 
-    -- header: ring + uppercase label
     local head = new("Frame", {
         Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1,
     }, wrap)
@@ -507,7 +518,6 @@ function NodiumUI._section(parent, secName)
         return row
     end
 
-    -- promt by @mopscode — Toggle
     function section:CreateToggle(name, default, callback)
         local state = default or false
         local row = rowScaffold(name or "Toggle", 26)
@@ -545,7 +555,6 @@ function NodiumUI._section(parent, secName)
         }
     end
 
-    -- promt by @mopscode — Slider
     function section:CreateSlider(name, min, max, default, callback)
         min, max = min or 0, max or 100
         local step, value = 1, default or min
@@ -625,7 +634,6 @@ function NodiumUI._section(parent, secName)
         }
     end
 
-    -- promt by @mopscode — Keybind (shows key name in small box on right, like reference "V")
     function section:CreateKeybind(name, default, callback)
         local current = default or Enum.KeyCode.V
         local listening = false
@@ -645,4 +653,17 @@ function NodiumUI._section(parent, secName)
         UserInputService.InputBegan:Connect(function(input, gpe)
             if gpe then return end
             if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-                current =
+                current = input.KeyCode
+                keyBox.Text = current.Name; keyBox.TextColor3 = THEME.text_dim
+                listening = false
+            elseif not listening and input.KeyCode == current then
+                if callback then callback() end
+            end
+        end)
+        return {
+            Set = function(_, k) current = k; keyBox.Text = k.Name end,
+            Get = function() return current end,
+        }
+    end
+
+    function section:
