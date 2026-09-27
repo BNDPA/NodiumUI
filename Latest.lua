@@ -1,7 +1,6 @@
 -- promt by @mopscode
 -- language: Lua, file: VantaUI.lua, target: Roblox (any executor, low-end safe)
--- v4: title from Window{title}, player name removed, sidebar logo removed,
--- CreateTab/CreateSection simple string API, single-line callers
+-- v4.1: fixed sidebar sizing (RelativeYY bug resolved) & content bounds
 
 local VantaUI = {}
 VantaUI.__index = VantaUI
@@ -12,7 +11,6 @@ local TweenService     = game:GetService("TweenService")
 local CoreGui          = game:GetService("CoreGui")
 local LocalPlayer      = Players.LocalPlayer
 
--- promt by @mopscode — palette
 local THEME = {
     bg         = Color3.fromRGB(16, 16, 20),
     bg_alt     = Color3.fromRGB(22, 22, 28),
@@ -59,7 +57,6 @@ local function stroke(obj, color, thick, trans)
     }, obj)
 end
 
--- promt by @mopscode — executor-safe parent
 local function resolveParent()
     local gui = new("ScreenGui", {
         Name = "VantaUI_" .. tostring(math.random(100000, 999999)),
@@ -106,7 +103,6 @@ local function draggable(frame, handle)
     end)
 end
 
--- promt by @mopscode — confirm modal
 local function confirmModal(gui, text, onYes)
     local overlay = new("TextButton", {
         Size = UDim2.fromScale(1, 1), BackgroundColor3 = THEME.shadow,
@@ -145,7 +141,6 @@ local function confirmModal(gui, text, onYes)
     mkBtn("Да",  0.5, THEME.danger, onYes)
 end
 
--- promt by @mopscode — library entry
 function VantaUI:Window(cfg)
     cfg = cfg or {}
     local title = cfg.title or "VANTA UI"
@@ -168,7 +163,6 @@ function VantaUI:Window(cfg)
     corner(panel, 10); stroke(panel, THEME.border, 1, 0)
     win.panel = panel
 
-    -- promt by @mopscode — top bar: title (from cfg) + controls
     local topbar = new("Frame", {
         Size = UDim2.new(1, 0, 0, 36),
         BackgroundColor3 = THEME.bg_alt, BorderSizePixel = 0,
@@ -179,14 +173,12 @@ function VantaUI:Window(cfg)
         BackgroundColor3 = THEME.bg_alt, BorderSizePixel = 0, ZIndex = topbar.ZIndex + 1,
     }, topbar)
 
-    -- accent dot
     new("Frame", {
         Position = UDim2.fromOffset(14, 15),
         Size = UDim2.fromOffset(6, 6),
         BackgroundColor3 = THEME.accent, BorderSizePixel = 0,
     }, topbar)
 
-    -- promt by @mopscode — title straight from cfg, no player suffix
     new("TextLabel", {
         Position = UDim2.fromOffset(28, 0),
         Size = UDim2.new(1, -120, 1, 0), BackgroundTransparency = 1,
@@ -211,15 +203,15 @@ function VantaUI:Window(cfg)
     local btnMin   = ctrlBtn("–", 32, THEME.accent_dim)
     local btnClose = ctrlBtn("×", 58, THEME.danger)
 
-    -- promt by @mopscode — sidebar (tabs only, no logo block)
+    -- ИСПРАВЛЕНО: Сайдбар теперь растягивается корректно по высоте с учетом шапки (36 пикселей)
     local sidebar = new("Frame", {
-        Position = UDim2.fromOffset(0, 36),
-        Size = UDim2.fromOffset(160, 1),
-        SizeConstraint = Enum.SizeConstraint.RelativeYY,
+        Position = UDim2.new(0, 0, 0, 36),
+        Size = UDim2.new(0, 160, 1, -36),
         BackgroundColor3 = THEME.sidebar, BorderSizePixel = 0,
     }, panel)
+    
     new("Frame", {
-        Size = UDim2.fromOffset(1, 1), SizeConstraint = Enum.SizeConstraint.RelativeYY,
+        Size = UDim2.new(0, 1, 1, 0),
         Position = UDim2.new(1, -1, 0, 0),
         BackgroundColor3 = THEME.border, BorderSizePixel = 0,
     }, sidebar)
@@ -233,9 +225,9 @@ function VantaUI:Window(cfg)
     }, sidebar)
     new("UIListLayout", { Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder }, tabList)
 
-    -- promt by @mopscode — content
+    -- ИСПРАВЛЕНО: Область контента
     local content = new("Frame", {
-        Position = UDim2.fromOffset(160, 36),
+        Position = UDim2.new(0, 160, 0, 36),
         Size = UDim2.new(1, -160, 1, -36),
         BackgroundTransparency = 1,
     }, panel)
@@ -243,7 +235,6 @@ function VantaUI:Window(cfg)
 
     draggable(panel, topbar)
 
-    -- promt by @mopscode — collapse / close
     local minimized = false
     btnMin.MouseButton1Click:Connect(function()
         minimized = not minimized
@@ -255,7 +246,6 @@ function VantaUI:Window(cfg)
         confirmModal(gui, "Точно закрыть окно?", function() gui:Destroy() end)
     end)
 
-    -- promt by @mopscode — public API: CreateTab(name) -> tab
     function win:CreateTab(name)
         name = name or "tab"
 
@@ -296,7 +286,6 @@ function VantaUI:Window(cfg)
         if #win.tabs == 0 then activate() end
         table.insert(win.tabs, tab)
 
-        -- promt by @mopscode — public API: tab:CreateSection(name) -> section
         function tab:CreateSection(name)
             name = name or "Section"
 
@@ -336,7 +325,6 @@ function VantaUI:Window(cfg)
                 return row
             end
 
-            -- promt by @mopscode — section:CreateToggle(name, default, callback)
             function section:CreateToggle(name, default, callback)
                 local state = default or false
                 local row = rowScaffold(name or "Toggle", 22)
@@ -377,7 +365,6 @@ function VantaUI:Window(cfg)
                 }
             end
 
-            -- promt by @mopscode — section:CreateButton(name, callback)
             function section:CreateButton(name, callback)
                 local row = rowScaffold(name or "Button", 22)
                 local b = new("TextButton", {
@@ -394,7 +381,6 @@ function VantaUI:Window(cfg)
                 return b
             end
 
-            -- promt by @mopscode — section:CreateSlider(name, min, max, default, callback)
             function section:CreateSlider(name, min, max, default, callback)
                 min, max = min or 0, max or 100
                 local step  = 1
@@ -476,7 +462,6 @@ function VantaUI:Window(cfg)
                 }
             end
 
-            -- promt by @mopscode — section:CreateKeybind(name, default, callback)
             function section:CreateKeybind(name, default, callback)
                 local current = default or Enum.KeyCode.E
                 local listening = false
@@ -509,7 +494,6 @@ function VantaUI:Window(cfg)
                 }
             end
 
-            -- promt by @mopscode — section:CreateTextbox(name, default, callback)
             function section:CreateTextbox(name, default, callback)
                 local row = new("Frame", {
                     Size = UDim2.new(1, 0, 0, 34), BackgroundTransparency = 1,
@@ -545,7 +529,6 @@ function VantaUI:Window(cfg)
         return tab
     end
 
-    -- promt by @mopscode — global show/hide
     UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
