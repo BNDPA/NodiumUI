@@ -1,6 +1,6 @@
 -- promt by @mopscode
 -- language: Lua, file: VantaUI.lua, target: Roblox (any executor, low-end safe)
--- v4.4: added Dropdown element (WindUI style)
+-- v4.6: Complete VantaUI with Dropdown, Metatable fixes, and Draggable Toggle Circle
 
 local VantaUI = {}
 VantaUI.__index = VantaUI
@@ -252,6 +252,50 @@ function VantaUI:Window(cfg)
         confirmModal(gui, "Точно закрыть окно?", function() gui:Destroy() end)
     end)
 
+    -- Передвигаемый круг для открытия/закрытия UI
+    function win:CreateDraggableCircle(defaultImage)
+        local circleFrame = new("TextButton", {
+            Name = "DraggableCircleContainer",
+            Size = UDim2.fromOffset(70, 70),
+            Position = UDim2.new(0.85, 0, 0.15, 0),
+            BackgroundColor3 = THEME.bg_alt,
+            BorderSizePixel = 0, AutoButtonColor = false,
+            Text = "", Active = true, ZIndex = 500,
+        }, gui)
+        corner(circleFrame, 35)
+        stroke(circleFrame, THEME.accent, 2, 0)
+
+        local imgLabel = new("ImageLabel", {
+            Size = UDim2.new(1, -6, 1, -6),
+            Position = UDim2.new(0, 3, 0, 3),
+            BackgroundTransparency = 1,
+            Image = defaultImage or "rbxassetid://6023426915",
+            ZIndex = 501,
+        }, circleFrame)
+        corner(imgLabel, 35)
+
+        draggable(circleFrame)
+
+        circleFrame.MouseButton1Click:Connect(function()
+            win.visible = not win.visible
+            panel.Visible = win.visible
+            tween(circleFrame, 0.08, { Size = UDim2.fromOffset(62, 62) })
+            task.wait(0.08)
+            tween(circleFrame, 0.08, { Size = UDim2.fromOffset(70, 70) })
+        end)
+
+        return {
+            SetImage = function(_, assetId)
+                if type(assetId) == "number" then
+                    imgLabel.Image = "rbxassetid://" .. tostring(assetId)
+                else
+                    imgLabel.Image = assetId
+                end
+            end,
+            Frame = circleFrame
+        }
+    end
+
     function win:CreateTab(name)
         name = name or "tab"
 
@@ -398,7 +442,6 @@ function VantaUI:Window(cfg)
                 return b
             end
 
-            -- ДОБАВЛЕНО: Выпадающий список (Dropdown) в стиле WindUI
             function section:CreateDropdown(name, options, default, callback)
                 options = options or {}
                 local selected = default or options[1] or "Выбрать"
@@ -430,8 +473,8 @@ function VantaUI:Window(cfg)
                     Size = UDim2.new(1, 0, 0, 0),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundColor3 = THEME.bg, BorderSizePixel = 0,
-                    Visible = false, ZIndex = 50,
-                }, win.gui) -- Создаем поверх окна, чтобы список не обрезался
+                    Visible = false, ZIndex = 500,
+                }, win.gui)
                 corner(listFrame, 6); stroke(listFrame, THEME.border, 1, 0)
                 new("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }, listFrame)
                 new("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4) }, listFrame)
@@ -460,7 +503,6 @@ function VantaUI:Window(cfg)
                     if opened then closeList() else openList() end
                 end)
 
-                -- Очистка и заполнение опций
                 local function refreshOptions()
                     for _, child in ipairs(listFrame:GetChildren()) do
                         if child:IsA("TextButton") then child:Destroy() end
@@ -472,7 +514,7 @@ function VantaUI:Window(cfg)
                             BackgroundColor3 = (opt == selected) and THEME.accent_bg or THEME.row,
                             BorderSizePixel = 0, Font = FONT_MED,
                             Text = tostring(opt), TextColor3 = (opt == selected) and THEME.text or THEME.text_dim,
-                            TextSize = 11, AutoButtonColor = false, ZIndex = 51,
+                            TextSize = 11, AutoButtonColor = false, ZIndex = 501,
                         }, listFrame)
                         corner(optBtn, 4)
 
@@ -584,6 +626,71 @@ function VantaUI:Window(cfg)
                 return {
                     Set = function(_, v) value = math.clamp(v, min, max); render() end,
                     Get = function() return value end,
+                }
+            end
+
+            function section:CreateKeybind(name, default, callback)
+                local current = default or Enum.KeyCode.E
+                local listening = false
+                local row = rowScaffold(name or "Keybind", 22)
+
+                local keyBtn = new("TextButton", {
+                    AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0),
+                    Size = UDim2.fromOffset(60, 18),
+                    BackgroundColor3 = THEME.row, BorderSizePixel = 0,
+                    Font = FONT_MED, Text = current.Name, TextColor3 = THEME.text_dim,
+                    TextSize = 11, AutoButtonColor = false,
+                    ZIndex = 6,
+                }, row)
+                corner(keyBtn, 4); stroke(keyBtn, THEME.border, 1, 0.4)
+                keyBtn.MouseButton1Click:Connect(function()
+                    listening = true; keyBtn.Text = "..."; keyBtn.TextColor3 = THEME.accent
+                end)
+                UserInputService.InputBegan:Connect(function(input, gpe)
+                    if gpe then return end
+                    if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                        current = input.KeyCode
+                        keyBtn.Text = current.Name; keyBtn.TextColor3 = THEME.text_dim
+                        listening = false
+                    elseif not listening and input.KeyCode == current then
+                        if callback then callback() end
+                    end
+                end)
+                return {
+                    Set = function(_, k) current = k; keyBtn.Text = k.Name end,
+                    Get = function() return current end,
+                }
+            end
+
+            function section:CreateTextbox(name, default, callback)
+                local row = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 34), BackgroundTransparency = 1,
+                    ZIndex = 5,
+                }, wrap)
+                new("TextLabel", {
+                    Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1,
+                    Font = FONT_MED, Text = name or "Input", TextColor3 = THEME.text,
+                    TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 6,
+                }, row)
+                local box = new("TextBox", {
+                    Position = UDim2.new(0, 0, 1, -20),
+                    Size = UDim2.new(1, 0, 0, 20),
+                    BackgroundColor3 = THEME.bg, BorderSizePixel = 0,
+                    Font = FONT_REG, Text = default or "", PlaceholderText = "...",
+                    TextColor3 = THEME.text, PlaceholderColor3 = THEME.text_mute,
+                    TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                    ClearTextOnFocus = false,
+                    ZIndex = 6,
+                }, row)
+                corner(box, 5); stroke(box, THEME.border, 1, 0.4)
+                new("UIPadding", { PaddingLeft = UDim.new(0, 6) }, box)
+                box.FocusLost:Connect(function(enter)
+                    if callback then callback(box.Text, enter) end
+                end)
+                return {
+                    Set = function(_, v) box.Text = v end,
+                    Get = function() return box.Text end,
                 }
             end
 
