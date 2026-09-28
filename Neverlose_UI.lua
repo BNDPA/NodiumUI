@@ -2547,18 +2547,16 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		return KeybindLib;
 	end;
 
-	function handle:AddTextInput(Config)
-		Config = NeverLose:ProcessParams(Config , {
+		function handle:AddTextInput(Config)
+		Config = NeverLose:ProcessParams(Config, {
 			Default = "",
-			Placeholder = "Placeholder",
-			Callback = print,
+			Placeholder = "Input...",
 			Flag = nil,
-			Size = 100,
-			Numeric = false,
+			Size = 125,
+			Callback = EmptyFunction,
 		});
 
-		local TextBoxLib = {};
-
+		local TextInputLib = {};
 		local TextInput = Instance.new("Frame")
 		local UICorner = Instance.new("UICorner")
 		local UIStroke = Instance.new("UIStroke")
@@ -2581,51 +2579,112 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = TextInput
 
+		TextBox.Name = NeverLose.RandomString();
 		TextBox.Parent = TextInput
-		TextBox.AnchorPoint = Vector2.new(0, 0.5)
+		TextBox.AnchorPoint = Vector2.new(0.5, 0.5)
 		TextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		TextBox.BackgroundTransparency = 1.000
 		TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		TextBox.BorderSizePixel = 0
-		TextBox.Position = UDim2.new(0, 5, 0.5, 0)
-		TextBox.Size = UDim2.new(1, -5, 0, 17)
+		TextBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+		TextBox.Size = UDim2.new(1, -10, 1, 0)
 		TextBox.ZIndex = ZINdex + 14
-		TextBox.ClearTextOnFocus = false
 		TextBox.Font = Enum.Font.GothamMedium
 		TextBox.PlaceholderText = Config.Placeholder
-		TextBox.Text = tostring(Config.Default)
+		TextBox.Text = Config.Default
 		TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-		TextBox.TextSize = 11.000
+		TextBox.TextSize = 10.000
 		TextBox.TextTransparency = 0.350
+		TextBox.ClearTextOnFocus = false
 		TextBox.TextXAlignment = Enum.TextXAlignment.Left
 
-		TextBoxLib.SetRender = LPH_NO_VIRTUALIZE(function(value)
+		TextInputLib.SetRender = LPH_NO_VIRTUALIZE(function(value)
 			if value then
-				NeverLose.PlayAnimate(TextInput , SlowyTween ,{
+				NeverLose.PlayAnimate(TextInput, SlowyTween, {
 					BackgroundTransparency = 0
-				})	
-
-				NeverLose.PlayAnimate(UIStroke , SlowyTween ,{
+				})
+				NeverLose.PlayAnimate(UIStroke, SlowyTween, {
 					Transparency = 0.650
-				})	
-
-				NeverLose.PlayAnimate(TextBox , SlowyTween ,{
+				})
+				NeverLose.PlayAnimate(TextBox, SlowyTween, {
 					TextTransparency = 0.350
-				})	
+				})
 			else
-				NeverLose.PlayAnimate(TextInput , SlowyTween ,{
+				NeverLose.PlayAnimate(TextInput, SlowyTween, {
 					BackgroundTransparency = 1
-				})	
-
-				NeverLose.PlayAnimate(UIStroke , SlowyTween ,{
+				})
+				NeverLose.PlayAnimate(UIStroke, SlowyTween, {
 					Transparency = 1
-				})	
-
-				NeverLose.PlayAnimate(TextBox , SlowyTween ,{
+				})
+				NeverLose.PlayAnimate(TextBox, SlowyTween, {
 					TextTransparency = 1
 				})
 			end;
 		end);
+
+		TextInputLib.SetRender(Signal:GetValue());
+		Signal:Connect(TextInputLib.SetRender);
+
+		NeverLose:AddSignal(TextBox.FocusLost:Connect(function(enterPressed)
+			Config.Default = TextBox.Text;
+			Config.Callback(Config.Default);
+		end));
+
+		function TextInputLib:GetValue()
+			return Config.Default;
+		end;
+
+		function TextInputLib:SetValue(v)
+			Config.Default = v;
+			TextBox.Text = v;
+			Config.Callback(Config.Default);
+		end;
+
+		if Config.Flag then
+			NeverLose.Flags[Config.Flag] = TextInputLib;
+		end;
+
+		return TextInputLib;
+	end;
+
+	return handle;
+end;
+
+function NeverLose:RegisiterItem(ItemRoot: Frame, Signal)
+	local Payback = {};
+
+	function Payback:AddToggle(Config)
+		-- Переадресация на создание переключателя внутри элемента
+		return NeverLose:RegisiterHandler(ItemRoot, Signal):AddToggle(Config);
+	end;
+
+	function Payback:AddSlider(Config)
+		return NeverLose:RegisiterHandler(ItemRoot, Signal):AddSlider(Config);
+	end;
+
+	function Payback:AddOption(GearIcon)
+		return NeverLose:RegisiterHandler(ItemRoot, Signal):AddOption(GearIcon);
+	end;
+
+	function Payback:AddColorPicker(Config)
+		return NeverLose:RegisiterHandler(ItemRoot, Signal):AddColorPicker(Config);
+	end;
+
+	function Payback:AddKeybind(Config)
+		return NeverLose:RegisiterHandler(ItemRoot, Signal):AddKeybind(Config);
+	end;
+
+	function Payback:AddTextInput(Config)
+		return NeverLose:RegisiterHandler(ItemRoot, Signal):AddTextInput(Config);
+	end;
+
+	return Payback;
+end;
+
+NeverLose.LoadIcon();
+
+return NeverLose;
+
 
 		NeverLose:AddSignal(TextBox:GetPropertyChangedSignal('Text'):Connect(LPH_NO_VIRTUALIZE(function()
 			local valout = NeverLose:ParseInput(TextBox.Text , Config.Numeric);
